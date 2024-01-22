@@ -1,9 +1,9 @@
 fn dedent(s: String) -> String:
-	let indent = min_indent(s)
-	if indent == 0:
-		return s
+    let indent = min_indent(s)
+    if indent == 0:
+        return s
 
-	return apply_dedent(s, indent)
+    return apply_dedent(s, indent)
 
 
 fn min_indent(s: String) -> Int:
@@ -13,9 +13,9 @@ fn min_indent(s: String) -> Int:
 
     var i: Int = 0
     while i < len(s):
-        if (s[i] == ' ' or s[i] == '\t') and should_append:
+        if (s[i] == " " or s[i] == "\t") and should_append:
             cur_indent += 1
-        elif s[i] == '\n':
+        elif s[i] == "\n":
             cur_indent = 0
             should_append = True
         else:
@@ -36,12 +36,12 @@ fn apply_dedent(s: String, indent: Int) -> String:
     while i < len(s):
         # Omit space or tab if we haven't omitted enough to match the target dedent.
         # On a new line, reset the omitted counter.
-        if (s[i] == ' ' or s[i] == '\t'):
+        if s[i] == " " or s[i] == "\t":
             if omitted < indent:
                 omitted += 1
             else:
                 modified += s[i]
-        elif s[i] == '\n':
+        elif s[i] == "\n":
             omitted = 0
             modified += s[i]
         else:

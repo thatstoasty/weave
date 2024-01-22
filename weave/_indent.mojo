@@ -12,7 +12,7 @@ fn indent(s: String, indent: UInt8) -> String:
     for i in range(len(s)):
         modified += s[i]
 
-        if s[i] == '\n':
+        if s[i] == "\n":
             add_indent(modified, indent)
-        
+
     return modified

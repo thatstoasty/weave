@@ -72,5 +72,5 @@ struct BufWriter[BUF_SIZE: Int]:
         for i in range(len(str)):
             strbuf.push_back(ord(str[i]))
         let buf = Buffer[Dim(), DType.uint8](strbuf.data.value, len(strbuf))
-        
+
         return self.write(buf)

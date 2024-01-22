@@ -11,7 +11,7 @@ fn pad(s: String, padding: UInt8) -> String:
     for i in range(len(text)):
         let char = text[i]
 
-        if char == '\n':
+        if char == "\n":
             add_pad(modified, padding, line_length)
             line_length = 0
             modified += char
@@ -25,7 +25,7 @@ fn pad(s: String, padding: UInt8) -> String:
             modified += char
             line_length += len(char)
             total_length += len(char)
-        
+
     return modified
 
 

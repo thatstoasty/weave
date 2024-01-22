@@ -7,7 +7,7 @@ fn add_newline(inout s: String):
 
 # TODO: Probably pretty inefficient
 fn add_word(inout s: String, word: String):
-    if s == "" or s[-1].find("\n") != 1:
+    if s == "" or s[-1].find("\n") == 1:
         s += word
     else:
         s += " " + word
@@ -28,8 +28,10 @@ fn wordwrap(s: String, limit: Int) raises -> String:
         if line_length + len(words[i]) >= limit:
             add_newline(modified)
             line_length = 0
+        elif words[i].find("\n") == -1:
+            line_length = 0
+
         add_word(modified, words[i])
         line_length += len(words[i]) + 1
-
 
     return modified
