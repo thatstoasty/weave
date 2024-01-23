@@ -11,11 +11,13 @@ struct Writer:
     var seq_changed: Bool
     var rune_buf: DynamicVector[Byte]
 
-    fn __init__(inout self, forward: buffer.Buffer) raises:
+    fn __init__(inout self, inout forward: buffer.Buffer) raises:
         self.forward = forward
         self.ansi = False
-        self.ansi_seq = buffer.Buffer(buf=DynamicVector[Byte]())
-        self.last_seq = buffer.Buffer(buf=DynamicVector[Byte]())
+        var ansi_buf = DynamicVector[Byte]()
+        var last_buf = DynamicVector[Byte]()
+        self.ansi_seq = buffer.Buffer(buf=ansi_buf)
+        self.last_seq = buffer.Buffer(buf=last_buf)
         self.seq_changed = False
         self.rune_buf = DynamicVector[Byte]()
 
@@ -24,8 +26,10 @@ struct Writer:
         """TODO: Writing bytes instead of encoded runes rn."""
         for i in range(len(b)):
             let char = chr(int(b[i]))
-
-            if char == Marker:
+            # TODO: Skipping null terminator bytes for now until I figure out how to deal with them. They come from the empty spaces in a dynamicvector
+            if b[i] == 0:
+                pass
+            elif char == Marker:
                 # ANSI escape sequence
                 self.ansi = True
                 self.seq_changed = True

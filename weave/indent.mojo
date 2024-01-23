@@ -1,4 +1,3 @@
-from weave.gojo.io import io
 from weave.gojo.bytes import buffer
 from weave.gojo.bytes import bytes as bt
 from weave.gojo.bytes.bytes import Byte
@@ -18,7 +17,8 @@ struct Writer():
 	fn __init__(inout self, indent: UInt8) raises:
 		self.indent = indent
 
-		self.buf = buffer.new_buffer(DynamicVector[Byte]())
+		var buf = DynamicVector[Byte]()
+		self.buf = buffer.new_buffer(buf)
 		self.ansi_writer = writer.Writer(self.buf) # This copies the buffer? I should probably try redoing this all with proper pointers
 		self.skip_indent = False
 		self.ansi = False
@@ -26,7 +26,6 @@ struct Writer():
 	# Bytes returns the indented result as a byte slice.
 	fn bytes(self) -> DynamicVector[Byte]:
 		return self.ansi_writer.forward.bytes()
-
 
 	# String returns the indented result as a string.
 	fn string(self) -> String:
@@ -46,7 +45,7 @@ struct Writer():
 			else:
 				if not self.skip_indent:
 					self.ansi_writer.reset_ansi()
-					let indent = __string__mul__(" ", int(self.indent))._buffer
+					let indent = __string__mul__(String(" "), int(self.indent))._buffer
 					_ = self.ansi_writer.write(indent)
 
 					self.skip_indent = True

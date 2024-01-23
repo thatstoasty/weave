@@ -45,7 +45,7 @@ struct Buffer(io.Writer, io.Reader):
     var off: Int  # read at &buf[off], write at &buf[len(buf)]
     var last_read: ReadOp  # last read operation, so that unread* can work correctly.
 
-    fn __init__(inout self, buf: DynamicVector[Byte]):
+    fn __init__(inout self, inout buf: DynamicVector[Byte]):
         self.buf = buf
         self.off = 0
         self.last_read = op_invalid
@@ -124,7 +124,7 @@ struct Buffer(io.Writer, io.Reader):
         """Inlineable version of grow for the fast-case where the
         internal buffer only needs to be resliced.
         It returns the index where bytes should be written and whether it succeeded."""
-        let l = self.buf.size
+        let l = self.len()
 
         if n <= cap(self.buf) - l:
             self.buf = get_slice(self.buf, 0, l + n)
@@ -150,11 +150,10 @@ struct Buffer(io.Writer, io.Reader):
 
         # TODO: What are the implications of using len 0 instead of nil check for bytes buffer?
         if self.buf.size == 0 and n <= small_buffer_size:
-            self.buf = DynamicVector[Byte]()
             self.buf.reserve(small_buffer_size)
-            # self.buf = DynamicVector[Byte](n, small_buffer_size)
-            return 0
-
+            # Returning 0 messed things up by inserting on the first index twice, but why?
+            # return 0
+            pass
         let c = cap(self.buf)
         if Float64(n) <= c / 2 - m:
             # We can slide things down instead of allocating a new
@@ -310,7 +309,9 @@ struct Buffer(io.Writer, io.Reader):
             if not ok:
                 m = self.grow(1)
 
+            # why is m 0 twice in a row?
             self.buf[m] = c
+
 
     # fn write_rune(inout self, r: Rune) -> Int:
     #     """Appends the UTF-8 encoding of Unicode code point r to the
@@ -486,7 +487,7 @@ struct Buffer(io.Writer, io.Reader):
         return to_string(sl)
 
 
-fn new_buffer(buf: DynamicVector[Byte]) -> Buffer:
+fn new_buffer(inout buf: DynamicVector[Byte]) -> Buffer:
     """Creates and initializes a new [Buffer] using buf as its
     initial contents. The new [Buffer] takes ownership of buf, and the
     caller should not use buf after this call. new_buffer is intended to
@@ -500,7 +501,7 @@ fn new_buffer(buf: DynamicVector[Byte]) -> Buffer:
     return Buffer(buf=buf)
 
 
-fn new_buffer_string(s: String) -> Buffer:
+fn new_buffer_string(inout s: String) -> Buffer:
     """Creates and initializes a new [Buffer] using string s as its
     initial contents. It is intended to prepare a buffer to read an existing
     string.
