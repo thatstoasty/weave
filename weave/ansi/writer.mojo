@@ -1,0 +1,77 @@
+from weave.gojo.bytes import buffer
+from weave.gojo.bytes.bytes import Byte, has_suffix
+from weave.ansi.ansi import Marker, is_terminator
+
+
+struct Writer:
+    var forward: buffer.Buffer
+    var ansi: Bool
+    var ansi_seq: buffer.Buffer
+    var last_seq: buffer.Buffer
+    var seq_changed: Bool
+    var rune_buf: DynamicVector[Byte]
+
+    fn __init__(inout self, forward: buffer.Buffer) raises:
+        self.forward = forward
+        self.ansi = False
+        self.ansi_seq = buffer.Buffer(buf=DynamicVector[Byte]())
+        self.last_seq = buffer.Buffer(buf=DynamicVector[Byte]())
+        self.seq_changed = False
+        self.rune_buf = DynamicVector[Byte]()
+
+    # Write is used to write content to the ANSI buffer.
+    fn write(inout self, b: DynamicVector[Byte]) raises -> Int:
+        """TODO: Writing bytes instead of encoded runes rn."""
+        for i in range(len(b)):
+            let char = chr(int(b[i]))
+
+            if char == Marker:
+                # ANSI escape sequence
+                self.ansi = True
+                self.seq_changed = True
+                _ = self.ansi_seq.write_byte(b[i])
+            elif self.ansi:
+                _ = self.ansi_seq.write_byte(b[i])
+                if is_terminator(b[i]):
+                    self.ansi = False
+
+                    if has_suffix(self.ansi_seq.bytes(), (String("[0m")._buffer)):
+                        # reset sequence
+                        self.last_seq.reset()
+                        self.seq_changed = False
+                    elif char == "m":
+                        # color code
+                        _ = self.last_seq.write(self.ansi_seq.bytes())
+
+                    _ = self.ansi_seq.write_to(self.forward)
+            else:
+                _ = self.write_byte(b[i])
+
+        return len(b)
+
+    fn write_byte(inout self, b: Byte) raises -> Int:
+        _ = self.forward.write_byte(b)
+        return 1
+
+    # fn writeRune(r rune) (int, error) {
+    #     if w.runeBuf == nil {
+    #         w.runeBuf = make(DynamicVector[Byte], utf8.UTFMax)
+    #     }
+    #     n := utf8.EncodeRune(w.runeBuf, r)
+    #     return w.Forward.Write(w.runeBuf[:n])
+    # }
+
+    fn last_sequence(self) -> String:
+        return self.last_seq.string()
+
+    fn reset_ansi(inout self) raises:
+        if not self.seq_changed:
+            return
+        let ansi_code = String("\x1b[0m")._buffer
+        var b = DynamicVector[Byte]()
+        for i in range(len(ansi_code)):
+            b.append(ansi_code[i])
+        _ = self.forward.write(b)
+
+    fn restore_ansi(inout self) raises:
+        _ = self.forward.write(self.last_seq.bytes())

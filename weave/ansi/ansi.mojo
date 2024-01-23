@@ -1,4 +1,4 @@
-alias marker = "\x1B"
+alias Marker = "\x1B"
 alias Rune = Int8
 
 
