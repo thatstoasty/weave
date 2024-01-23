@@ -1,5 +1,5 @@
 from weave.gojo.bytes.bytes import index_byte, Byte
-from weave.gojo.bytes.util import cap, to_string, copy
+from weave.gojo.bytes.util import cap, to_string, copy, trim_null_characters
 from weave.gojo.collections import get_slice
 import weave.gojo.io.io
 
@@ -207,6 +207,8 @@ struct Buffer(io.Writer, io.Reader):
         needed. The return value n is the length of s; err is always nil. If the
         buffer becomes too large, write_string will panic with [ErrTooLarge].
         """
+        # TODO: Doesn't work right now but write_byte does
+
         self.last_read = op_invalid
         var m: Int
         let ok: Bool
@@ -214,8 +216,15 @@ struct Buffer(io.Writer, io.Reader):
         if not ok:
             m = self.grow(len(s))
 
-        var b = get_slice[Byte](self.buf, m, len(self.buf))
-        return copy(b, s._buffer)
+        # print("slice from", m, "to", len(self.buf))
+        # var buf = get_slice(self.buf, m, len(self.buf))
+
+        # TODO: Hacky way of getting rid of all the extra 0s that are added to the vector when it's resized.
+        var s_buffer = s._buffer
+        s_buffer = trim_null_characters(s_buffer)
+        let copied = copy(self.buf, s_buffer)
+
+        return copied
 
     # fn read_from(inout self, r: io.Reader) -> Int64:
     #     """Reads data from r until EOF and appends it to the buffer, growing

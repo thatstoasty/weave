@@ -1,6 +1,14 @@
 from weave.gojo.bytes.bytes import Byte
 
 
+fn trim_null_characters(inout b: DynamicVector[Byte]) -> DynamicVector[Byte]:
+    var new_b = DynamicVector[Byte](b.size)
+    for i in range(b.size):
+        if b[i] != 0:
+            new_b.append(b[i])
+    return new_b
+
+
 fn to_string(b: DynamicVector[Byte]) -> String:
     var s: String = ""
     for i in range(b.size):
@@ -18,10 +26,10 @@ fn copy(inout target: DynamicVector[Byte], source: DynamicVector[Byte]) -> Int:
     # TODO: End of strings include a null character which terminates the string. This is a hack to not write those to the buffer for now.
     for i in range(source.size):
         if source[i] != 0:
-            let element = source[i]
-            target.append(element)
+            target.append(source[i])
             count += 1
 
+    target = trim_null_characters(target)
     return count
 
 
