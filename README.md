@@ -1,11 +1,13 @@
 # weave
-A collection of (ANSI-sequence aware) text reflow operations &amp; algorithms.
+A collection of (ANSI-sequence aware) text reflow operations &amp; algorithms. A project to learn Mojo, Go, and how to work with buffers.
 
 Ported from/inspired by: https://github.com/muesli/reflow/tree/master
 
 > NOTE: This is not a 1:1 port or stable due to missing features in Mojo, and the fact that I'm learning how to work with buffers as I go!
 
-## Wrap
+## Wrap (Unconditional Wrapping)
+The `wrap` module lets you unconditionally wrap strings or entire blocks of text.
+
 ```python
 from weave import indent
 from weave import wrap
@@ -26,6 +28,8 @@ Sekai
 ```
 
 ## Wordwrap
+The `wordwrap` package lets you word-wrap strings or entire blocks of text.
+
 ```python
 from weave import indent
 from weave import wrap
@@ -45,6 +49,8 @@ Sekai!
 ```
 
 ## Indent
+The `indent` module lets you indent strings or entire blocks of text.
+
 ```python
 from weave import indent
 from weave import wrap
@@ -57,7 +63,17 @@ fn main() raises:
     print(indent.to_string("Hello\nWorld\n  TEST!", 5))
 ```
 
+Output
+```txt
+     Hello
+     World
+       TEST!
+```
+
 ## Dedent
+The `dedent` module lets you dedent strings or entire blocks of text. 
+It takes the minimum indentation of all lines and removes that amount of leading whitespace from each line.
+
 ```python
 from weave import indent
 from weave import wrap
@@ -77,6 +93,8 @@ Line 2!
 ```
 
 ## Padding
+The `padding` module lets you pad strings or entire blocks of text.
+
 ```python
 from weave import indent
 from weave import wrap
