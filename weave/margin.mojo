@@ -40,8 +40,8 @@ struct Writer:
 
 
 fn new_writer(width: UInt8, margin: UInt8) raises -> Writer:
-    var pw = padding.new_writer(width)
-    var iw = indent.new_writer(margin)
+    let pw = padding.new_writer(width, False)
+    let iw = indent.new_writer(margin)
 
     return Writer(pw=pw, iw=iw)
 
