@@ -1,7 +1,7 @@
 from weave.gojo.bytes.bytes import Byte
 
 
-fn trim_null_characters(inout b: DynamicVector[Byte]) -> DynamicVector[Byte]:
+fn trim_null_characters(b: DynamicVector[Byte]) -> DynamicVector[Byte]:
     var new_b = DynamicVector[Byte](b.size)
     for i in range(b.size):
         if b[i] != 0:

@@ -199,16 +199,15 @@ struct Buffer(io.Writer, io.Reader):
         if not ok:
             m = self.grow(p.size)
 
-        var b = get_slice[Byte](self.buf, m, self.buf.size)
-        return copy(b, p)
+        # var b = get_slice[Byte](self.buf, m, self.buf.size)
+
+        return copy(self.buf, trim_null_characters(p))
 
     fn write_string(inout self, s: String) raises -> Int:
         """Appends the contents of s to the buffer, growing the buffer as
         needed. The return value n is the length of s; err is always nil. If the
         buffer becomes too large, write_string will panic with [ErrTooLarge].
         """
-        # TODO: Doesn't work right now but write_byte does
-
         self.last_read = op_invalid
         var m: Int
         let ok: Bool
@@ -222,9 +221,8 @@ struct Buffer(io.Writer, io.Reader):
         # TODO: Hacky way of getting rid of all the extra 0s that are added to the vector when it's resized.
         var s_buffer = s._buffer
         s_buffer = trim_null_characters(s_buffer)
-        let copied = copy(self.buf, s_buffer)
 
-        return copied
+        return copy(self.buf, s_buffer)
 
     # fn read_from(inout self, r: io.Reader) -> Int64:
     #     """Reads data from r until EOF and appends it to the buffer, growing
@@ -320,7 +318,6 @@ struct Buffer(io.Writer, io.Reader):
 
             # why is m 0 twice in a row?
             self.buf[m] = c
-
 
     # fn write_rune(inout self, r: Rune) -> Int:
     #     """Appends the UTF-8 encoding of Unicode code point r to the

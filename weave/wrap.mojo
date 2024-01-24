@@ -46,8 +46,8 @@ struct Wrap():
         self.ansi = ansi
         self.forceful_newline = forceful_newline
     
-    fn add_new_line(inout self) raises:
-        _ = self.buf.write_byte(ord('\n'))
+    fn add_newline(inout self) raises:
+        _ = self.buf.write_byte(ord(self.newline))
         self.line_len = 0
     
     fn write(inout self, b: DynamicVector[Byte]) raises -> Int:
@@ -71,13 +71,13 @@ struct Wrap():
                 if is_terminator(ord(c)):
                     self.ansi = False
             elif c == "\n":
-                self.add_new_line()
+                self.add_newline()
                 self.forceful_newline = False
             else:
                 let width = len(c)
 
                 if self.line_len + width > self.limit:
-                    self.add_new_line()
+                    self.add_newline()
                     self.forceful_newline = True
                 
                 if self.line_len == 0:
