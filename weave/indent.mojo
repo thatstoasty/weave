@@ -6,6 +6,7 @@ from weave.ansi.ansi import is_terminator
 from weave.stdlib.builtins.string import __string__mul__
 
 
+@value
 struct Writer():
 	var indent: UInt8
 
@@ -31,10 +32,10 @@ struct Writer():
 	fn string(self) -> String:
 		return self.ansi_writer.forward.string()
 	
-	# Write is used to write content to the indent buffer.
+	# write is used to write content to the indent buffer.
 	fn write(inout self, b: DynamicVector[Byte]) raises -> Int:
 		for i in range(len(b)):
-			let c = chr(Int(b[i]))
+			let c = chr(int(b[i]))
 			if c == '\x1B':
 				# ANSI escape sequence
 				self.ansi = True
@@ -45,7 +46,7 @@ struct Writer():
 			else:
 				if not self.skip_indent:
 					self.ansi_writer.reset_ansi()
-					let indent = __string__mul__(String(" "), Int(self.indent))._buffer
+					let indent = __string__mul__(String(" "), int(self.indent))._buffer
 					_ = self.ansi_writer.write(indent)
 
 					self.skip_indent = True
@@ -66,7 +67,7 @@ fn new_writer(indent: UInt8) raises -> Writer:
 	)
 
 
-# fn NewWriterPipe(forward io.Writer, indent UInt8, indent_fn Indentfn) *Writer 
+# fn NewWriterPipe(forward io.Writer, indent UInt8, indent_fn Indentfn)-> Writer:
 # 	return &Writer
 # 		Indent:     indent,
 # 		Indentfn: indent_fn,

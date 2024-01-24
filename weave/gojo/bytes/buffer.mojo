@@ -32,8 +32,8 @@ alias max_int: Int = 2147483647
 alias MinRead: Int8 = 512
 
 # # ErrTooLarge is passed to panic if memory cannot be allocated to store data in a buffer.
-alias ErrTooLarge = "bytes.Buffer: too large"
-alias errNegativeRead = "bytes.Buffer: reader returned negative count from read"
+alias ErrTooLarge = "buffer.Buffer: too large"
+alias errNegativeRead = "buffer.Buffer: reader returned negative count from read"
 alias ErrShortWrite = "short write"
 
 
@@ -108,7 +108,7 @@ struct Buffer(io.Writer, io.Reader):
 
         self.last_read = op_invalid
         if n < 0 or n > self.len():
-            raise Error("bytes.Buffer: truncation out of range")
+            raise Error("buffer.Buffer: truncation out of range")
 
         self.buf = get_slice(self.buf, 0, self.off + n)
 
@@ -162,7 +162,7 @@ struct Buffer(io.Writer, io.Reader):
             # don't spend all our time copying.
             _ = copy(self.buf, get_slice(self.buf, self.off, len(self.buf)))
         elif c > max_int - c - n:
-            raise Error("bytes.Buffer: too large")
+            raise Error("buffer.Buffer: too large")
         else:
             # Add self.off to account for self.buf[:self.off] being sliced off the front.
             self.buf = self.grow_slice(
@@ -182,7 +182,7 @@ struct Buffer(io.Writer, io.Reader):
         If the buffer can't grow it will panic with [ErrTooLarge].
         """
         if n < 0:
-            raise Error("bytes.Buffer.grow: negative count")
+            raise Error("buffer.Buffer.grow: negative count")
 
         let m = self.grow(n)
         self.buf = get_slice(self.buf, 0, m)
@@ -284,9 +284,9 @@ struct Buffer(io.Writer, io.Reader):
         let n_bytes: Int = self.len()
         var n: Int64 = 0
         if n_bytes > 0:
-            let m = w.write(get_slice(self.buf, self.off, len(self.buf)))
+            let m = self.write(get_slice(self.buf, self.off, len(self.buf)))
             if m > n_bytes:
-                raise Error("bytes.Buffer.write_to: invalid write count")
+                raise Error("buffer.Buffer.write_to: invalid write count")
 
             self.off += m
             n = Int64(m)
@@ -426,7 +426,7 @@ struct Buffer(io.Writer, io.Reader):
     # from any read operation.)
     # fn unread_rune(self):
     #     if self.last_read <= op_invalid 
-    #         return errors.New("bytes.Buffer: unread_rune: previous operation was not a successful read_rune")
+    #         return errors.New("buffer.Buffer: unread_rune: previous operation was not a successful read_rune")
     #     
     #     if self.off >= Int(self.last_read) 
     #         self.off -= Int(self.last_read)
@@ -434,7 +434,7 @@ struct Buffer(io.Writer, io.Reader):
     #     self.last_read = op_invalid
     #     return nil
 
-    # var err_unread_byte = errors.New("bytes.Buffer: unread_byte: previous operation was not a successful read")
+    # var err_unread_byte = errors.New("buffer.Buffer: unread_byte: previous operation was not a successful read")
 
     fn unread_byte(inout self) raises -> None:
         """Unreads the last byte returned by the most recent successful
@@ -444,7 +444,7 @@ struct Buffer(io.Writer, io.Reader):
         """
         if self.last_read == op_invalid:
             raise Error(
-                "bytes.Buffer: unread_byte: previous operation was not a successful"
+                "buffer.Buffer: unread_byte: previous operation was not a successful"
                 " read"
             )
 

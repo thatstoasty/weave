@@ -85,13 +85,13 @@ trait Reader:
         ...
 
 
-# Writer is the interface that wraps the basic Write method.
+# Writer is the interface that wraps the basic write method.
 #
-# Write writes len(p) bytes from p to the underlying data stream.
+# write writes len(p) bytes from p to the underlying data stream.
 # It returns the number of bytes written from p (0 <= n <= len(p))
 # and any error encountered that caused the write to stop early.
-# Write must return a non-nil error if it returns n < len(p).
-# Write must not modify the slice data, even temporarily.
+# write must return a non-nil error if it returns n < len(p).
+# write must not modify the slice data, even temporarily.
 #
 # Implementations must not retain p.
 trait Writer:
@@ -99,9 +99,9 @@ trait Writer:
         ...
 
 
-# Closer is the interface that wraps the basic Close method.
+# Closer is the interface that wraps the basic close method.
 #
-# The behavior of Close after the first call is undefined.
+# The behavior of close after the first call is undefined.
 # Specific implementations may document their own behavior.
 trait Closer:
     fn close(inout self, p: DynamicVector[Byte]) -> Int:
@@ -110,7 +110,7 @@ trait Closer:
 
 # Seeker is the interface that wraps the basic Seek method.
 #
-# Seek sets the offset for the next Read or Write to offset,
+# Seek sets the offset for the next Read or write to offset,
 # interpreted according to whence:
 # [seek_start] means relative to the start of the file,
 # [seek_current] means relative to the current offset, and
@@ -176,9 +176,9 @@ trait WriterReadFrom(Writer, ReaderFrom):
     ...
 
 
-# WriterTo is the interface that wraps the WriteTo method.
+# WriterTo is the interface that wraps the write_to method.
 #
-# WriteTo writes data to w until there's no more data to write or
+# write_to writes data to w until there's no more data to write or
 # when an error occurs. The return value n is the number of bytes
 # written. Any error encountered during the write is also returned.
 #
@@ -307,13 +307,13 @@ trait StringWriter:
 
 # WriteString writes the contents of the string s to w, which accepts a slice of bytes.
 # If w implements [StringWriter], [StringWriter.WriteString] is invoked directly.
-# Otherwise, [Writer.Write] is called exactly once.
+# Otherwise, [Writer.write] is called exactly once.
 fn write_string[T: Writer](inout w: T, s: String) raises -> Int:
-    return w.write(s._buffer)
+    return self.write(s._buffer)
 
 
 fn write_string[T: StringWriter](w: T, s: String) -> Int:
-    return w.write_string(s)
+    return self.write_string(s)
 
 
 # read_at_least reads from r into buf until it has read at least min bytes.
@@ -380,7 +380,7 @@ fn read_full[R: Reader](inout r: R, buf: DynamicVector[Byte]) raises -> Int:
 # not treat an EOF from Read as an error to be reported.
 
 # If src implements [WriterTo],
-# the copy is implemented by calling src.WriteTo(dst).
+# the copy is implemented by calling src.write_to(dst).
 # Otherwise, if dst implements [ReaderFrom],
 # the copy is implemented by calling dst.ReadFrom(src).
 # """
@@ -551,8 +551,8 @@ fn read_full[R: Reader](inout r: R, buf: DynamicVector[Byte]) raises -> Int:
 # 	return &OffsetWriterw, off, off
 # 
 
-# fn (o *OffsetWriter) Write(p DynamicVector[Byte]) (n Int, err error) 
-# 	n, err = o.w.WriteAt(p, o.off)
+# fn (o *OffsetWriter) write(p DynamicVector[Byte]) (n Int, err error) 
+# 	n, err = o.self.WriteAt(p, o.off)
 # 	o.off += int64(n)
 # 	return
 # 
@@ -563,7 +563,7 @@ fn read_full[R: Reader](inout r: R, buf: DynamicVector[Byte]) raises -> Int:
 # 	
 
 # 	off += o.base
-# 	return o.w.WriteAt(p, off)
+# 	return o.self.WriteAt(p, off)
 # 
 
 # fn (o *OffsetWriter) Seek(offset int64, whence Int) (int64, error) 
@@ -584,7 +584,7 @@ fn read_full[R: Reader](inout r: R, buf: DynamicVector[Byte]) raises -> Int:
 
 # # TeeReader returns a [Reader] that writes to w what it reads from r.
 # # All reads from r performed through it are matched with
-# # corresponding writes to w. There is no internal buffering -
+# # corresponding writes to self. There is no internal buffering -
 # # the write must complete before the read completes.
 # # Any error encountered while writing is reported as a read error.
 # fn TeeReader(r Reader, w Writer) Reader 
@@ -599,14 +599,14 @@ fn read_full[R: Reader](inout r: R, buf: DynamicVector[Byte]) raises -> Int:
 # fn (t *teeReader) Read(p DynamicVector[Byte]) (n Int, err error) 
 # 	n, err = t.r.Read(p)
 # 	if n > 0 
-# 		if n, err := t.w.Write(p[:n]); err != nil 
+# 		if n, err := t.self.write(p[:n]); err != nil 
 # 			return n, err
 # 		
 # 	
 # 	return
 # 
 
-# # Discard is a [Writer] on which all Write calls succeed
+# # Discard is a [Writer] on which all write calls succeed
 # # without doing anything.
 # var Discard Writer = discard
 
@@ -616,7 +616,7 @@ fn read_full[R: Reader](inout r: R, buf: DynamicVector[Byte]) raises -> Int:
 # # io.Discard can avoid doing unnecessary work.
 # var _ ReaderFrom = discard
 
-# fn (discard) Write(p DynamicVector[Byte]) (Int, error) 
+# fn (discard) write(p DynamicVector[Byte]) (Int, error) 
 # 	return len(p), nil
 # 
 
@@ -647,7 +647,7 @@ fn read_full[R: Reader](inout r: R, buf: DynamicVector[Byte]) raises -> Int:
 # 	
 # 
 
-# # NopCloser returns a [ReadCloser] with a no-op Close method wrapping
+# # NopCloser returns a [ReadCloser] with a no-op close method wrapping
 # # the provided [Reader] r.
 # # If r implements [WriterTo], the returned [ReadCloser] will implement [WriterTo]
 # # by forwarding calls to r.
@@ -662,16 +662,16 @@ fn read_full[R: Reader](inout r: R, buf: DynamicVector[Byte]) raises -> Int:
 # 	Reader
 # 
 
-# fn (nopCloser) Close() error  return nil 
+# fn (nopCloser) close() error  return nil 
 
 # type nopCloserWriterTo struct 
 # 	Reader
 # 
 
-# fn (nopCloserWriterTo) Close() error  return nil 
+# fn (nopCloserWriterTo) close() error  return nil 
 
-# fn (c nopCloserWriterTo) WriteTo(w Writer) (n int64, err error) 
-# 	return c.Reader.(WriterTo).WriteTo(w)
+# fn (c nopCloserWriterTo) write_to(w Writer) (n int64, err error) 
+# 	return c.Reader.(WriterTo).write_to(w)
 # 
 
 # # ReadAll reads from r until an error or EOF and returns the data it read.

@@ -3,6 +3,7 @@ from weave.gojo.bytes.bytes import Byte, has_suffix
 from weave.ansi.ansi import Marker, is_terminator
 
 
+@value
 struct Writer:
     var forward: buffer.Buffer
     var ansi: Bool
@@ -21,11 +22,11 @@ struct Writer:
         self.seq_changed = False
         self.rune_buf = DynamicVector[Byte]()
 
-    # Write is used to write content to the ANSI buffer.
+    # write is used to write content to the ANSI buffer.
     fn write(inout self, b: DynamicVector[Byte]) raises -> Int:
         """TODO: Writing bytes instead of encoded runes rn."""
         for i in range(len(b)):
-            let char = chr(Int(b[i]))
+            let char = chr(int(b[i]))
             # TODO: Skipping null terminator bytes for now until I figure out how to deal with them. They come from the empty spaces in a dynamicvector
             if b[i] == 0:
                 pass
@@ -58,11 +59,11 @@ struct Writer:
         return 1
 
     # fn writeRune(r rune) (Int, error) 
-    #     if w.runeBuf == nil 
-    #         w.runeBuf = make(DynamicVector[Byte], utf8.UTFMax)
+    #     if self.runeBuf == nil 
+    #         self.runeBuf = make(DynamicVector[Byte], utf8.UTFMax)
     #     
-    #     n := utf8.EncodeRune(w.runeBuf, r)
-    #     return w.Forward.Write(w.runeBuf[:n])
+    #     n := utf8.EncodeRune(self.runeBuf, r)
+    #     return self.Forward.write(self.runeBuf[:n])
     # 
 
     fn last_sequence(self) -> String:
