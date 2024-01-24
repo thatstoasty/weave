@@ -58,13 +58,13 @@ struct Writer:
         _ = self.forward.write_byte(b)
         return 1
 
-    # fn writeRune(r rune) (Int, error) 
-    #     if self.runeBuf == nil 
+    # fn writeRune(r rune) (Int, error)
+    #     if self.runeBuf == nil
     #         self.runeBuf = make(DynamicVector[Byte], utf8.UTFMax)
-    #     
+    #
     #     n := utf8.EncodeRune(self.runeBuf, r)
     #     return self.Forward.write(self.runeBuf[:n])
-    # 
+    #
 
     fn last_sequence(self) -> String:
         return self.last_seq.string()

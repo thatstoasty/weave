@@ -1,14 +1,13 @@
 from weave.gojo.bytes import buffer
 from weave.gojo.bytes import bytes as bt
 from weave.gojo.bytes.bytes import Byte
-from weave.gojo.bytes.util import trim_null_characters
 from weave.ansi import writer
 from weave.ansi.ansi import is_terminator, Marker
 from weave.stdlib.builtins.string import __string__mul__, strip
 from weave.stdlib.builtins.vector import contains
 
 
-struct Writer():
+struct Writer:
     var width: UInt8
     var tail: String
 
@@ -16,108 +15,101 @@ struct Writer():
     var buf: buffer.Buffer
     var ansi: Bool
 
-    fn __init__(inout self):
-        pass
-    
+    fn __init__(inout self, width: UInt8, tail: String, ansi: Bool = False) raises:
+        self.width = width
+        self.tail = tail
+        self.ansi = ansi
+
+        var buf = DynamicVector[Byte]()
+        self.buf = buffer.Buffer(buf=buf)
+
+        # I think it's copying the buffer for now instead of using the actual buffer
+        self.ansi_writer = writer.Writer(self.buf)
+
     # write truncates content at the given printable cell width, leaving any
     # ansi sequences intact.
-    fn write(b: DynamicVector[Byte]) -> Int:
-        tw := ansi.PrintableRuneWidth(self.tail)
-        if self.width < UInt8(tw) 
-            return self.buf.WriteString(self.tail)
-        
+    fn write(inout self, b: DynamicVector[Byte]) raises -> Int:
+        # TODO: Normally rune length
+        let tw = len(self.tail)
+        if self.width < UInt8(tw):
+            return self.buf.write_string(self.tail)
 
         self.width -= UInt8(tw)
-        var curWidth UInt8
+        var cur_width: UInt8
 
-        for _, c := range string(b) 
-            if c == ansi.Marker 
+        for i in range(len(b)):
+            let c = chr(int(b[i]))
+            if c == Marker:
                 # ANSI escape sequence
                 self.ansi = True
-            else if self.ansi 
-                if ansi.IsTerminator(c) 
+            elif self.ansi:
+                if is_terminator(b[i]):
                     # ANSI sequence terminated
                     self.ansi = False
-                
-            else 
-                curWidth += UInt8(runewidth.RuneWidth(c))
-            
+            else:
+                cur_width += UInt8(len(c))
 
-            if curWidth > self.width 
-                n, err := self.buf.WriteString(self.tail)
-                if self.ansi_writer.LastSequence() != "" 
+            if cur_width > self.width:
+                let n = self.buf.write_string(self.tail)
+                if self.ansi_writer.last_sequence() != "":
                     self.ansi_writer.reset_ansi()
-                
-                return n, err
-            
+                return n
 
-            _, err := self.ansi_writer.write([]byte(string(c)))
-            if err != nil 
-                return 0, err
-            
-        
+            _ = self.ansi_writer.write_byte(b[i])
 
-        return len(b), nil
-
+        return len(b)
 
     # Bytes returns the truncated result as a byte slice.
-    fn bytes() -> DynamicVector[Byte]:
+    fn bytes(self) -> DynamicVector[Byte]:
         return self.buf.bytes()
 
-
     # String returns the truncated result as a string.
-    fn -> String:() -> String: 
-        return self.buf.String()
+    fn string(self) -> String:
+        return self.buf.string()
 
 
-
-fn new_writer(width: UInt8, tail string)-> Writer:
-	w := &Writer
-		width: width,
-		tail:  tail,
-	
-	self.ansi_writer = &ansi.Writer
-		Forward: &self.buf,
-	
-	return w
+fn new_writer(width: UInt8, tail: String) raises -> Writer:
+    return Writer(width, tail)
 
 
-fn NewWriterPipe(forward io.Writer, width: UInt8, tail string)-> Writer:
-	return &Writer
-		width: width,
-		tail:  tail,
-		ansi_writer: &ansi.Writer
-			Forward: forward,
-		,
-	
+# fn NewWriterPipe(forward io.Writer, width: UInt8, tail string)-> Writer:
+# 	return &Writer
+# 		width: width,
+# 		tail:  tail,
+# 		ansi_writer: &ansi.Writer
+# 			Forward: forward,
+# 		,
 
 
 # Bytes is shorthand for declaring a new default truncate-writer instance,
 # used to immediately truncate a byte slice.
-fn bytes(b: DynamicVector[Byte], width: UInt8) -> DynamicVector[Byte]:
-	return BytesWithTail(b, width, []byte(""))
+fn bytes(b: DynamicVector[Byte], width: UInt8) raises -> DynamicVector[Byte]:
+    var tail = DynamicVector[Byte]()
+    return bytes_with_tail(b, width, tail)
 
 
 # Bytes is shorthand for declaring a new default truncate-writer instance,
 # used to immediately truncate a byte slice. A tail is then added to the
 # end of the byte slice.
-fn BytesWithTail(b: DynamicVector[Byte], width: UInt8, tail []byte) -> DynamicVector[Byte]:
-	f := new_writer(width, string(tail))
-	_, _ = f.write(b)
+fn bytes_with_tail(
+    b: DynamicVector[Byte], width: UInt8, tail: DynamicVector[Byte]
+) raises -> DynamicVector[Byte]:
+    let f = new_writer(width, bt.to_string(tail))
+    _ = f.write(b)
 
-	return f.bytes()
+    return f.bytes()
 
 
 # String is shorthand for declaring a new default truncate-writer instance,
 # used to immediately truncate a string.
-fn String(s: String, width: UInt8) -> String: 
-	return StringWithTail(s, width, "")
+fn to_string(s: String, width: UInt8) raises -> String:
+    return string_with_tail(s, width, "")
 
 
-# StringWithTail is shorthand for declaring a new default truncate-writer instance,
+# string_with_tail is shorthand for declaring a new default truncate-writer instance,
 # used to immediately truncate a string. A tail is then added to the end of the
 # string.
-fn StringWithTail(s: String, width: UInt8, tail string) -> String: 
-	return string(BytesWithTail([]byte(s), width, []byte(tail)))
-
-
+fn string_with_tail(s: String, width: UInt8, tail: String) raises -> String:
+    var buf = s._buffer
+    let b = bytes_with_tail(buf, width, tail._buffer)
+    return bt.to_string(b)

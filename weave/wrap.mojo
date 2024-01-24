@@ -6,11 +6,11 @@ from weave.ansi.ansi import is_terminator, Marker
 from weave.stdlib.builtins.string import __string__mul__
 
 
-alias default_newline = '\n'
+alias default_newline = "\n"
 alias default_tab_width = 4
 
 
-struct Wrap():
+struct Wrap:
     var limit: Int
     var newline: String
     var keep_newlines: Bool
@@ -23,7 +23,7 @@ struct Wrap():
     var forceful_newline: Bool
 
     fn __init__(
-        inout self, 
+        inout self,
         limit: Int,
         newline: String = default_newline,
         keep_newlines: Bool = True,
@@ -31,8 +31,8 @@ struct Wrap():
         tab_width: Int = default_tab_width,
         line_len: Int = 0,
         ansi: Bool = False,
-        forceful_newline: Bool = False
-        ):
+        forceful_newline: Bool = False,
+    ):
         self.limit = limit
         self.newline = newline
         self.keep_newlines = keep_newlines
@@ -45,19 +45,19 @@ struct Wrap():
         self.line_len = line_len
         self.ansi = ansi
         self.forceful_newline = forceful_newline
-    
+
     fn add_newline(inout self) raises:
         _ = self.buf.write_byte(ord(self.newline))
         self.line_len = 0
-    
+
     fn write(inout self, b: DynamicVector[Byte]) raises -> Int:
-        let tab_space = __string__mul__(' ', self.tab_width)
+        let tab_space = __string__mul__(" ", self.tab_width)
         var s = bt.to_string(b)
 
         s = s.replace("\t", tab_space)
         if not self.keep_newlines:
             s = s.replace("\n", "")
-        
+
         let width = len(s)
         if self.limit <= 0 or self.line_len + width <= self.limit:
             self.line_len += width
@@ -79,15 +79,15 @@ struct Wrap():
                 if self.line_len + width > self.limit:
                     self.add_newline()
                     self.forceful_newline = True
-                
+
                 if self.line_len == 0:
                     if self.forceful_newline and not self.preserve_space and c == " ":
                         continue
                 else:
                     self.forceful_newline = False
-                
+
                 self.line_len += width
-            
+
             _ = self.buf.write_string(c)
             # _ = self.buf.write_byte(ord(c))
 
@@ -105,26 +105,25 @@ struct Wrap():
 # new_writer returns a new instance of a wrapping writer, initialized with
 # default settings.
 fn new_writer(limit: Int) -> Wrap:
-    return Wrap(
-        limit=limit
-    )
+    return Wrap(limit=limit)
+
 
 # Bytes is shorthand for declaring a new default Wrap instance,
 # used to immediately wrap a byte slice.
 fn bytes(inout b: DynamicVector[Byte], limit: Int) raises -> DynamicVector[Byte]:
-	var f = new_writer(limit)
-	_ = f.write(b)
+    var f = new_writer(limit)
+    _ = f.write(b)
 
-	return f.bytes()
+    return f.bytes()
 
 
 # String is shorthand for declaring a new default Wrap instance,
 # used to immediately wrap a string.
 fn to_string(s: String, limit: Int) raises -> String:
-	var buf = s._buffer
-	let b = bytes(buf, limit)
+    var buf = s._buffer
+    let b = bytes(buf, limit)
 
-	return bt.to_string(b)
+    return bt.to_string(b)
 
 
 fn in_group(a: DynamicVector[Byte], c: Byte) -> Bool:

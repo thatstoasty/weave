@@ -1,7 +1,6 @@
 from weave.gojo.bytes import buffer
 from weave.gojo.bytes import bytes as bt
 from weave.gojo.bytes.bytes import Byte
-from weave.gojo.bytes.util import trim_null_characters
 from weave.ansi import writer
 from weave.ansi.ansi import is_terminator, Marker
 from weave.stdlib.builtins.string import __string__mul__, strip
@@ -9,7 +8,7 @@ from weave.stdlib.builtins.vector import contains
 
 
 @value
-struct Writer():
+struct Writer:
     var padding: UInt8
 
     var ansi_writer: writer.Writer
@@ -36,7 +35,9 @@ struct Writer():
 
         var forward = DynamicVector[Byte]()
         var forward_buf = buffer.Buffer(buf=forward)
-        self.ansi_writer = writer.Writer(forward_buf) # This copies the buffer? I should probably try redoing this all with proper pointers
+        self.ansi_writer = writer.Writer(
+            forward_buf
+        )  # This copies the buffer? I should probably try redoing this all with proper pointers
 
     # write is used to write content to the padding buffer.
     fn write(inout self, b: DynamicVector[Byte]) raises -> Int:
@@ -51,7 +52,7 @@ struct Writer():
             else:
                 self.line_len += len(c)
 
-                if c == '\n':
+                if c == "\n":
                     # end of current line
                     self.pad()
                     self.ansi_writer.reset_ansi()
@@ -63,7 +64,9 @@ struct Writer():
 
     fn pad(inout self) raises:
         if self.padding > 0 and UInt8(self.line_len) < self.padding:
-            let padding = __string__mul__(" ", int(self.padding) - self.line_len)._buffer
+            let padding = __string__mul__(
+                " ", int(self.padding) - self.line_len
+            )._buffer
             _ = self.ansi_writer.write(padding)
 
     # close will finish the padding operation.
@@ -75,7 +78,7 @@ struct Writer():
         return self.cache.bytes()
 
     # String returns the padded result as a string.
-    fn to_string(self) -> String: 
+    fn to_string(self) -> String:
         return self.cache.string()
 
     # flush will finish the padding operation. Always call it before trying to
@@ -83,7 +86,7 @@ struct Writer():
     fn flush(inout self) raises:
         if self.line_len != 0:
             self.pad()
-            
+
         self.cache.reset()
         _ = self.buf.write_to(self.cache)
         self.line_len = 0
@@ -91,7 +94,8 @@ struct Writer():
 
 
 fn new_writer(width: UInt8) raises -> Writer:
-	return Writer(width)
+    return Writer(width)
+
 
 # fn NewWriterPipe(forward io.Writer, width: UInt8) -> Writer:
 # 	return &Writer
@@ -105,17 +109,17 @@ fn new_writer(width: UInt8) raises -> Writer:
 # Bytes is shorthand for declaring a new default padding-writer instance,
 # used to immediately pad a byte slice.
 fn bytes(b: DynamicVector[Byte], width: UInt8) raises -> DynamicVector[Byte]:
-	let f = new_writer(width)
-	_ = f.write(b)
-	_ = f.flush()
+    let f = new_writer(width)
+    _ = f.write(b)
+    _ = f.flush()
 
-	return f.bytes()
+    return f.bytes()
 
 
 # String is shorthand for declaring a new default padding-writer instance,
 # used to immediately pad a string.
 fn to_string(s: String, width: UInt8) raises -> String:
-	var buf = s._buffer
-	let b = bytes(buf, width)
+    var buf = s._buffer
+    let b = bytes(buf, width)
 
-	return bt.to_string(b)
+    return bt.to_string(b)

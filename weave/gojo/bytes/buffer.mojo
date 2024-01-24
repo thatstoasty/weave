@@ -231,23 +231,23 @@ struct Buffer(io.Writer, io.Reader):
     #     buffer becomes too large, read_from will panic with [ErrTooLarge].
     #     """
     #     self.last_read = op_invalid
-    #     for 
+    #     for
     #         i := self.grow(MinRead)
     #         self.buf = self.buf[:i]
     #         m, e := r.read(self.buf[i:cap(self.buf)])
-    #         if m < 0 
+    #         if m < 0
     #             panic(errNegativeRead)
-    #         
+    #
 
     #         self.buf = self.buf[:i+m]
     #         n += int64(m)
-    #         if e == io.EOF 
+    #         if e == io.EOF
     #             return n, nil # e is EOF, so return nil explicitly
-    #         
-    #         if e != nil 
+    #
+    #         if e != nil
     #             return n, e
-    #         
-    #     
+    #
+    #
 
     fn grow_slice(self, b: DynamicVector[Byte], n: Int) -> DynamicVector[Byte]:
         """Grows b by n, preserving the original content of self.
@@ -306,7 +306,7 @@ struct Buffer(io.Writer, io.Reader):
         write_byte. If the buffer becomes too large, write_byte will panic with
         [ErrTooLarge].
         """
-        # TODO: Skipping all 0 bytes for now until I figure out how to handle the grow function indexing 
+        # TODO: Skipping all 0 bytes for now until I figure out how to handle the grow function indexing
         # not working correctly and the 0s remaining in the empty dynamic vector indices.
         if c != 0:
             self.last_read = op_invalid
@@ -401,23 +401,23 @@ struct Buffer(io.Writer, io.Reader):
     # If no bytes are available, the error returned is io.EOF.
     # If the bytes are an erroneous UTF-8 encoding, it
     # consumes one byte and returns U+FFFD, 1.
-    # fn read_rune(self) (r rune, size Int, err error) 
-    #     if self.empty() 
+    # fn read_rune(self) (r rune, size Int, err error)
+    #     if self.empty()
     #         # Buffer is empty, reset to recover space.
     #         self.reset()
     #         return 0, 0, io.EOF
-    #     
+    #
     #     c := self.buf[self.off]
-    #     if c < utf8.RuneSelf 
+    #     if c < utf8.RuneSelf
     #         self.off+= 1
     #         self.last_read = op_read_rune1
     #         return rune(c), 1, nil
-    #     
+    #
     #     r, n := utf8.DecodeRune(self.buf[self.off:])
     #     self.off += n
     #     self.last_read = ReadOp(n)
     #     return r, n, nil
-    # 
+    #
 
     # unread_rune unreads the last rune returned by [Buffer.read_rune].
     # If the most recent read or write operation on the buffer was
@@ -425,12 +425,12 @@ struct Buffer(io.Writer, io.Reader):
     # it is stricter than [Buffer.unread_byte], which will unread the last byte
     # from any read operation.)
     # fn unread_rune(self):
-    #     if self.last_read <= op_invalid 
+    #     if self.last_read <= op_invalid
     #         return errors.New("buffer.Buffer: unread_rune: previous operation was not a successful read_rune")
-    #     
-    #     if self.off >= Int(self.last_read) 
+    #
+    #     if self.off >= Int(self.last_read)
     #         self.off -= Int(self.last_read)
-    #     
+    #
     #     self.last_read = op_invalid
     #     return nil
 
