@@ -38,6 +38,7 @@ struct Writer:
 
         # This copies the buffer? I should probably try redoing this all with proper pointers
         self.ansi_writer = writer.Writer(self.buf)
+
     # write is used to write content to the padding buffer.
     fn write(inout self, b: DynamicVector[Byte]) raises -> Int:
         for i in range(len(b)):
@@ -74,11 +75,8 @@ struct Writer:
 
     fn pad(inout self) raises:
         if self.padding > 0 and UInt8(self.line_len) < self.padding:
-            let padding = __string__mul__(
-                " ", int(self.padding) - self.line_len
-            )
+            let padding = __string__mul__(" ", int(self.padding) - self.line_len)
             _ = self.ansi_writer.write(padding._buffer)
-
 
     # close will finish the padding operation.
     fn close(inout self) raises:
@@ -105,10 +103,7 @@ struct Writer:
 
 
 fn new_writer(width: UInt8, pad_left: Bool) raises -> Writer:
-    return Writer(
-        padding=width, 
-        pad_left=pad_left
-    )
+    return Writer(padding=width, pad_left=pad_left)
 
 
 # fn NewWriterPipe(forward io.Writer, width: UInt8) -> Writer:
@@ -122,7 +117,9 @@ fn new_writer(width: UInt8, pad_left: Bool) raises -> Writer:
 
 # Bytes is shorthand for declaring a new default padding-writer instance,
 # used to immediately pad a byte slice.
-fn bytes(b: DynamicVector[Byte], width: UInt8, pad_left: Bool = False) raises -> DynamicVector[Byte]:
+fn bytes(
+    b: DynamicVector[Byte], width: UInt8, pad_left: Bool = False
+) raises -> DynamicVector[Byte]:
     var f = new_writer(width, pad_left)
     _ = f.write(b)
     _ = f.flush()

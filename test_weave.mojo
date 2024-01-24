@@ -12,4 +12,4 @@ fn main() raises:
     print(dedent.to_string("    Line 1!\n  Line 2!"))
     print(padding.to_string("Hello\nWorld\nThis is my text!", 15, True))
     print(truncate.to_string("abcdefghikl\nasjdn", 5))
-    # print(is_terminator(123))
+    print(padding.to_string(wrap.to_string("Hello Sekai!", 5), 5))
