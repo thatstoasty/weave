@@ -16,16 +16,19 @@ struct Writer:
     var cache: buffer.Buffer
     var line_len: Int
     var ansi: Bool
+    var pad_left: Bool
 
     fn __init__(
         inout self,
         padding: UInt8,
         line_len: Int = 0,
         ansi: Bool = False,
+        pad_left: Bool = False,
     ) raises:
         self.padding = padding
         self.line_len = line_len
         self.ansi = ansi
+        self.pad_left = pad_left
 
         var buf = DynamicVector[Byte]()
         self.buf = buffer.Buffer(buf=buf)
@@ -33,16 +36,16 @@ struct Writer:
         var cache = DynamicVector[Byte]()
         self.cache = buffer.Buffer(buf=cache)
 
-        var forward = DynamicVector[Byte]()
-        var forward_buf = buffer.Buffer(buf=forward)
-        self.ansi_writer = writer.Writer(
-            forward_buf
-        )  # This copies the buffer? I should probably try redoing this all with proper pointers
-
+        # This copies the buffer? I should probably try redoing this all with proper pointers
+        self.ansi_writer = writer.Writer(self.buf)
     # write is used to write content to the padding buffer.
     fn write(inout self, b: DynamicVector[Byte]) raises -> Int:
         for i in range(len(b)):
             let c = chr(int(b[i]))
+
+            if i == 0 and self.pad_left:
+                self.pad()
+                self.line_len = int(self.padding)
 
             if c == Marker:
                 self.ansi = True
@@ -52,13 +55,20 @@ struct Writer:
             else:
                 self.line_len += len(c)
 
-                if c == "\n":
-                    # end of current line
+                if c == "\n" and not self.pad_left:
+                    # end of current line, if pad right then add padding before newline
                     self.pad()
                     self.ansi_writer.reset_ansi()
                     self.line_len = 0
 
             _ = self.ansi_writer.write(c._buffer)
+
+            if c == "\n" and self.pad_left:
+                # end of current line, if pad left then add padding after newline
+                self.line_len = 0
+                self.pad()
+                self.line_len = int(self.padding)
+                self.ansi_writer.reset_ansi()
 
         return len(b)
 
@@ -66,8 +76,9 @@ struct Writer:
         if self.padding > 0 and UInt8(self.line_len) < self.padding:
             let padding = __string__mul__(
                 " ", int(self.padding) - self.line_len
-            )._buffer
-            _ = self.ansi_writer.write(padding)
+            )
+            _ = self.ansi_writer.write(padding._buffer)
+
 
     # close will finish the padding operation.
     fn close(inout self) raises:
@@ -78,7 +89,7 @@ struct Writer:
         return self.cache.bytes()
 
     # String returns the padded result as a string.
-    fn to_string(self) -> String:
+    fn string(self) -> String:
         return self.cache.string()
 
     # flush will finish the padding operation. Always call it before trying to
@@ -88,13 +99,16 @@ struct Writer:
             self.pad()
 
         self.cache.reset()
-        _ = self.buf.write_to(self.cache)
+        _ = self.ansi_writer.forward.write_to(self.cache)
         self.line_len = 0
         self.ansi = False
 
 
-fn new_writer(width: UInt8) raises -> Writer:
-    return Writer(width)
+fn new_writer(width: UInt8, pad_left: Bool) raises -> Writer:
+    return Writer(
+        padding=width, 
+        pad_left=pad_left
+    )
 
 
 # fn NewWriterPipe(forward io.Writer, width: UInt8) -> Writer:
@@ -108,8 +122,8 @@ fn new_writer(width: UInt8) raises -> Writer:
 
 # Bytes is shorthand for declaring a new default padding-writer instance,
 # used to immediately pad a byte slice.
-fn bytes(b: DynamicVector[Byte], width: UInt8) raises -> DynamicVector[Byte]:
-    let f = new_writer(width)
+fn bytes(b: DynamicVector[Byte], width: UInt8, pad_left: Bool = False) raises -> DynamicVector[Byte]:
+    var f = new_writer(width, pad_left)
     _ = f.write(b)
     _ = f.flush()
 
@@ -118,8 +132,8 @@ fn bytes(b: DynamicVector[Byte], width: UInt8) raises -> DynamicVector[Byte]:
 
 # String is shorthand for declaring a new default padding-writer instance,
 # used to immediately pad a string.
-fn to_string(s: String, width: UInt8) raises -> String:
-    var buf = s._buffer
-    let b = bytes(buf, width)
+fn to_string(s: String, width: UInt8, pad_left: Bool = False) raises -> String:
+    let buf = s._buffer
+    let b = bytes(buf, width, pad_left)
 
     return bt.to_string(b)

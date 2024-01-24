@@ -13,8 +13,8 @@ fn to_string(s: String) raises -> String:
 
 
 fn min_indent(s: String) -> Int:
-    var cur_indent: Int
-    var min_indent: Int
+    var cur_indent: Int = 0
+    var min_indent: Int = 0
     var should_append = True
     var i: Int = 0
 
@@ -37,7 +37,7 @@ fn min_indent(s: String) -> Int:
 
 
 fn dedent(s: String, indent: Int) raises -> String:
-    var omitted: Int
+    var omitted: Int = 0
     var should_omit: Bool = True
     var vec: DynamicVector[Byte] = DynamicVector[Byte]()
     var buf: buffer.Buffer = buffer.new_buffer(buf=vec)

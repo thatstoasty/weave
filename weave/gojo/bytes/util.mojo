@@ -2,9 +2,10 @@ from weave.gojo.bytes.bytes import Byte
 
 
 fn trim_null_characters(b: DynamicVector[Byte]) -> DynamicVector[Byte]:
+    """Limits characters to the ASCII range of 1-127. Excludes null characters, extended characters, and unicode characters."""
     var new_b = DynamicVector[Byte](b.size)
     for i in range(b.size):
-        if b[i] != 0:
+        if b[i] > 0 and b[i] < 127:
             new_b.append(b[i])
     return new_b
 

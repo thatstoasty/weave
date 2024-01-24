@@ -32,10 +32,10 @@ struct Writer:
         # TODO: Normally rune length
         let tw = len(self.tail)
         if self.width < UInt8(tw):
-            return self.buf.write_string(self.tail)
+            return self.ansi_writer.forward.write_string(self.tail)
 
         self.width -= UInt8(tw)
-        var cur_width: UInt8
+        var cur_width: UInt8 = 0
 
         for i in range(len(b)):
             let c = chr(int(b[i]))
@@ -50,7 +50,7 @@ struct Writer:
                 cur_width += UInt8(len(c))
 
             if cur_width > self.width:
-                let n = self.buf.write_string(self.tail)
+                let n = self.ansi_writer.forward.write_string(self.tail)
                 if self.ansi_writer.last_sequence() != "":
                     self.ansi_writer.reset_ansi()
                 return n
@@ -61,11 +61,11 @@ struct Writer:
 
     # Bytes returns the truncated result as a byte slice.
     fn bytes(self) -> DynamicVector[Byte]:
-        return self.buf.bytes()
+        return self.ansi_writer.forward.bytes()
 
     # String returns the truncated result as a string.
     fn string(self) -> String:
-        return self.buf.string()
+        return self.ansi_writer.forward.string()
 
 
 fn new_writer(width: UInt8, tail: String) raises -> Writer:
@@ -84,7 +84,7 @@ fn new_writer(width: UInt8, tail: String) raises -> Writer:
 # Bytes is shorthand for declaring a new default truncate-writer instance,
 # used to immediately truncate a byte slice.
 fn bytes(b: DynamicVector[Byte], width: UInt8) raises -> DynamicVector[Byte]:
-    var tail = DynamicVector[Byte]()
+    let tail = DynamicVector[Byte]()
     return bytes_with_tail(b, width, tail)
 
 
@@ -94,7 +94,7 @@ fn bytes(b: DynamicVector[Byte], width: UInt8) raises -> DynamicVector[Byte]:
 fn bytes_with_tail(
     b: DynamicVector[Byte], width: UInt8, tail: DynamicVector[Byte]
 ) raises -> DynamicVector[Byte]:
-    let f = new_writer(width, bt.to_string(tail))
+    var f = new_writer(width, bt.to_string(tail))
     _ = f.write(b)
 
     return f.bytes()
@@ -110,6 +110,6 @@ fn to_string(s: String, width: UInt8) raises -> String:
 # used to immediately truncate a string. A tail is then added to the end of the
 # string.
 fn string_with_tail(s: String, width: UInt8, tail: String) raises -> String:
-    var buf = s._buffer
+    let buf = s._buffer
     let b = bytes_with_tail(buf, width, tail._buffer)
     return bt.to_string(b)
