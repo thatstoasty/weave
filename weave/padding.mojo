@@ -16,19 +16,16 @@ struct Writer:
     var cache: buffer.Buffer
     var line_len: Int
     var ansi: Bool
-    var pad_left: Bool
 
     fn __init__(
         inout self,
         padding: UInt8,
         line_len: Int = 0,
         ansi: Bool = False,
-        pad_left: Bool = False,
     ) raises:
         self.padding = padding
         self.line_len = line_len
         self.ansi = ansi
-        self.pad_left = pad_left
 
         var buf = DynamicVector[Byte]()
         self.buf = buffer.Buffer(buf=buf)
@@ -44,10 +41,6 @@ struct Writer:
         for i in range(len(b)):
             let c = chr(int(b[i]))
 
-            if i == 0 and self.pad_left:
-                self.pad()
-                self.line_len = int(self.padding)
-
             if c == Marker:
                 self.ansi = True
             elif self.ansi:
@@ -56,20 +49,13 @@ struct Writer:
             else:
                 self.line_len += len(c)
 
-                if c == "\n" and not self.pad_left:
+                if c == "\n":
                     # end of current line, if pad right then add padding before newline
                     self.pad()
                     self.ansi_writer.reset_ansi()
                     self.line_len = 0
 
             _ = self.ansi_writer.write(c._buffer)
-
-            if c == "\n" and self.pad_left:
-                # end of current line, if pad left then add padding after newline
-                self.line_len = 0
-                self.pad()
-                self.line_len = int(self.padding)
-                self.ansi_writer.reset_ansi()
 
         return len(b)
 
@@ -102,8 +88,8 @@ struct Writer:
         self.ansi = False
 
 
-fn new_writer(width: UInt8, pad_left: Bool) raises -> Writer:
-    return Writer(padding=width, pad_left=pad_left)
+fn new_writer(width: UInt8) raises -> Writer:
+    return Writer(padding=width)
 
 
 # fn NewWriterPipe(forward io.Writer, width: UInt8) -> Writer:
@@ -118,9 +104,8 @@ fn new_writer(width: UInt8, pad_left: Bool) raises -> Writer:
 # Bytes is shorthand for declaring a new default padding-writer instance,
 # used to immediately pad a byte slice.
 fn bytes(
-    b: DynamicVector[Byte], width: UInt8, pad_left: Bool = False
-) raises -> DynamicVector[Byte]:
-    var f = new_writer(width, pad_left)
+    b: DynamicVector[Byte], width: UInt8) raises -> DynamicVector[Byte]:
+    var f = new_writer(width)
     _ = f.write(b)
     _ = f.flush()
 
@@ -129,8 +114,8 @@ fn bytes(
 
 # String is shorthand for declaring a new default padding-writer instance,
 # used to immediately pad a string.
-fn to_string(s: String, width: UInt8, pad_left: Bool = False) raises -> String:
+fn to_string(s: String, width: UInt8) raises -> String:
     let buf = s._buffer
-    let b = bytes(buf, width, pad_left)
+    let b = bytes(buf, width)
 
     return bt.to_string(b)

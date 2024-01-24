@@ -123,13 +123,10 @@ struct WordWrap:
 
 				# add a line break if the current word would exceed the line's
 				# character limit
-				print(self.word.string(), self.line_len + self.space.len() + self.word.len(), self.limit, self.word.len())
-				print(self.line_len + self.space.len() + self.word.len() > self.limit, self.word.len() < self.limit)
 				if (
 					self.line_len + self.space.len() + self.word.len() > self.limit
 					and self.word.len() < self.limit
 				):
-					print("limit reached")
 					self.add_newline()
 
 		return len(b)

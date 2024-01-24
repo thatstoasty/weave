@@ -30,6 +30,8 @@ Sekai
 ## Wordwrap
 The `wordwrap` package lets you word-wrap strings or entire blocks of text.
 
+TODO: Doesn't work correctly with ANSI sequences yet.
+
 ```python
 from weave import indent
 from weave import wrap
@@ -93,7 +95,7 @@ Line 2!
 ```
 
 ## Padding
-The `padding` module lets you pad strings or entire blocks of text.
+The `padding` module lets you right pad strings or entire blocks of text.
 
 ```python
 from weave import indent
@@ -104,15 +106,11 @@ from weave import padding
 from weave import truncate
 
 fn main() raises:
-    print(padding.to_string("Hello\nWorld\nThis is my text!", 15, True))
     print(padding.to_string("Hello\nWorld\nThis is my text!", 15))
 ```
 
 Output
 ```txt
-               Hello
-               World
-               This is my text!
 Hello
 World
 This is my text!
