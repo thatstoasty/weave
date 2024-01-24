@@ -25,7 +25,7 @@ struct Writer:
     fn write(inout self, b: DynamicVector[Byte]) raises -> Int:
         """TODO: Writing bytes instead of encoded runes rn."""
         for i in range(len(b)):
-            let char = chr(int(b[i]))
+            let char = chr(Int(b[i]))
             # TODO: Skipping null terminator bytes for now until I figure out how to deal with them. They come from the empty spaces in a dynamicvector
             if b[i] == 0:
                 pass
@@ -57,13 +57,13 @@ struct Writer:
         _ = self.forward.write_byte(b)
         return 1
 
-    # fn writeRune(r rune) (int, error) {
-    #     if w.runeBuf == nil {
+    # fn writeRune(r rune) (Int, error) 
+    #     if w.runeBuf == nil 
     #         w.runeBuf = make(DynamicVector[Byte], utf8.UTFMax)
-    #     }
+    #     
     #     n := utf8.EncodeRune(w.runeBuf, r)
     #     return w.Forward.Write(w.runeBuf[:n])
-    # }
+    # 
 
     fn last_sequence(self) -> String:
         return self.last_seq.string()

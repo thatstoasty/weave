@@ -15,7 +15,7 @@ fn to_string(b: DynamicVector[Byte]) -> String:
         # TODO: Resizing isn't really working rn. The grow functions return the wrong index to append new bytes to.
         # This is a hack to ignore the 0 null characters that are used to resize the dynamicvector capacity.
         if b[i] != 0:
-            let char = chr(int(b[i]))
+            let char = chr(Int(b[i]))
             s += char
     return s
 

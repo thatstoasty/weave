@@ -34,7 +34,7 @@ struct Writer():
 	# Write is used to write content to the indent buffer.
 	fn write(inout self, b: DynamicVector[Byte]) raises -> Int:
 		for i in range(len(b)):
-			let c = chr(int(b[i]))
+			let c = chr(Int(b[i]))
 			if c == '\x1B':
 				# ANSI escape sequence
 				self.ansi = True
@@ -45,7 +45,7 @@ struct Writer():
 			else:
 				if not self.skip_indent:
 					self.ansi_writer.reset_ansi()
-					let indent = __string__mul__(String(" "), int(self.indent))._buffer
+					let indent = __string__mul__(String(" "), Int(self.indent))._buffer
 					_ = self.ansi_writer.write(indent)
 
 					self.skip_indent = True
@@ -66,15 +66,15 @@ fn new_writer(indent: UInt8) raises -> Writer:
 	)
 
 
-# fn NewWriterPipe(forward io.Writer, indent UInt8, indent_func IndentFunc) *Writer {
-# 	return &Writer{
+# fn NewWriterPipe(forward io.Writer, indent UInt8, indent_fn Indentfn) *Writer 
+# 	return &Writer
 # 		Indent:     indent,
-# 		IndentFunc: indent_func,
-# 		ansi_writer: &ansi.Writer{
+# 		Indentfn: indent_fn,
+# 		ansi_writer: &ansi.Writer
 # 			Forward: forward,
-# 		},
-# 	}
-# }
+# 		,
+# 	
+# 
 
 # Bytes is shorthand for declaring a new default indent-writer instance,
 # used to immediately indent a byte slice.

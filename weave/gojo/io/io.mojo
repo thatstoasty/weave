@@ -393,12 +393,12 @@ fn read_full[R: Reader](inout r: R, buf: DynamicVector[Byte]) raises -> Int:
 # #
 # # If either src implements [WriterTo] or dst implements [ReaderFrom],
 # # buf will not be used to perform the copy.
-# fn CopyBuffer(dst Writer, src Reader, buf DynamicVector[Byte]) (written int64, err error) {
-# 	if buf != nil and len(buf) == 0 {
+# fn CopyBuffer(dst Writer, src Reader, buf DynamicVector[Byte]) (written int64, err error) 
+# 	if buf != nil and len(buf) == 0 
 # 		panic("empty buffer in CopyBuffer")
-# 	}
+# 	
 # 	return copy_buffer(dst, src, buf)
-# }
+# 
 
 
 # fn copy_buffer[W: Writer, R: Reader](dst: W, src: R, buf: DynamicVector[Byte]) raises -> Int64:
@@ -431,7 +431,7 @@ fn read_full[R: Reader](inout r: R, buf: DynamicVector[Byte]) raises -> Int:
 # # LimitReader returns a Reader that reads from r
 # # but stops with EOF after n bytes.
 # # The underlying implementation is a *LimitedReader.
-# fn LimitReader(r Reader, n int64) Reader { return &LimitedReader{r, n} }
+# fn LimitReader(r Reader, n int64) Reader  return &LimitedReaderr, n 
 
 # # A LimitedReader reads from R but limits the amount of
 # # data returned to just N bytes. Each call to Read
@@ -441,60 +441,60 @@ fn read_full[R: Reader](inout r: R, buf: DynamicVector[Byte]) raises -> Int:
 # 	var R: Reader # underlying reader
 # 	N int64  # max bytes remaining
 
-# fn (l *LimitedReader) Read(p DynamicVector[Byte]) (n Int, err error) {
-# 	if l.N <= 0 {
+# fn (l *LimitedReader) Read(p DynamicVector[Byte]) (n Int, err error) 
+# 	if l.N <= 0 
 # 		return 0, EOF
-# 	}
-# 	if int64(len(p)) > l.N {
+# 	
+# 	if int64(len(p)) > l.N 
 # 		p = p[0:l.N]
-# 	}
+# 	
 # 	n, err = l.R.Read(p)
 # 	l.N -= int64(n)
 # 	return
-# }
+# 
 
 # # NewSectionReader returns a [SectionReader] that reads from r
 # # starting at offset off and stops with EOF after n bytes.
-# fn NewSectionReader(r ReaderAt, off int64, n int64) *SectionReader {
+# fn NewSectionReader(r ReaderAt, off int64, n int64) *SectionReader 
 # 	var remaining int64
 # 	const maxint64 = 1<<63 - 1
-# 	if off <= maxint64-n {
+# 	if off <= maxint64-n 
 # 		remaining = n + off
-# 	} else {
+# 	 else 
 # 		# Overflow, with no way to return error.
 # 		# Assume we can read up to an offset of 1<<63 - 1.
 # 		remaining = maxint64
-# 	}
-# 	return &SectionReader{r, off, off, remaining, n}
-# }
+# 	
+# 	return &SectionReaderr, off, off, remaining, n
+# 
 
 # # SectionReader implements Read, Seek, and ReadAt on a section
 # # of an underlying [ReaderAt].
-# type SectionReader struct {
+# type SectionReader struct 
 # 	r     ReaderAt # constant after creation
 # 	base  int64    # constant after creation
 # 	off   int64
 # 	limit int64 # constant after creation
 # 	n     int64 # constant after creation
-# }
+# 
 
-# fn (s *SectionReader) Read(p DynamicVector[Byte]) (n Int, err error) {
-# 	if s.off >= s.limit {
+# fn (s *SectionReader) Read(p DynamicVector[Byte]) (n Int, err error) 
+# 	if s.off >= s.limit 
 # 		return 0, EOF
-# 	}
-# 	if max := s.limit - s.off; int64(len(p)) > max {
+# 	
+# 	if max := s.limit - s.off; int64(len(p)) > max 
 # 		p = p[0:max]
-# 	}
+# 	
 # 	n, err = s.r.ReadAt(p, s.off)
 # 	s.off += int64(n)
 # 	return
-# }
+# 
 
 # alias errWhence = "Seek: invalid whence"
 # alias errOffset = "Seek: invalid offset"
 
-# fn (s *SectionReader) Seek(offset int64, whence Int) (int64, error) {
-# 	switch whence {
+# fn (s *SectionReader) Seek(offset int64, whence Int) (int64, error) 
+# 	switch whence 
 # 	default:
 # 		return 0, errWhence
 # 	case seek_start:
@@ -503,196 +503,196 @@ fn read_full[R: Reader](inout r: R, buf: DynamicVector[Byte]) raises -> Int:
 # 		offset += s.off
 # 	case seek_end:
 # 		offset += s.limit
-# 	}
-# 	if offset < s.base {
+# 	
+# 	if offset < s.base 
 # 		return 0, errOffset
-# 	}
+# 	
 # 	s.off = offset
 # 	return offset - s.base, nil
-# }
+# 
 
-# fn (s *SectionReader) ReadAt(p DynamicVector[Byte], off int64) (n Int, err error) {
-# 	if off < 0 or off >= s.Size() {
+# fn (s *SectionReader) ReadAt(p DynamicVector[Byte], off int64) (n Int, err error) 
+# 	if off < 0 or off >= s.Size() 
 # 		return 0, EOF
-# 	}
+# 	
 # 	off += s.base
-# 	if max := s.limit - off; int64(len(p)) > max {
+# 	if max := s.limit - off; int64(len(p)) > max 
 # 		p = p[0:max]
 # 		n, err = s.r.ReadAt(p, off)
-# 		if err == nil {
+# 		if err == nil 
 # 			err = EOF
-# 		}
+# 		
 # 		return n, err
-# 	}
+# 	
 # 	return s.r.ReadAt(p, off)
-# }
+# 
 
 # # Size returns the size of the section in bytes.
-# fn (s *SectionReader) Size() int64 { return s.limit - s.base }
+# fn (s *SectionReader) Size() -> Int:64  return s.limit - s.base 
 
 # # Outer returns the underlying [ReaderAt] and offsets for the section.
 # #
 # # The returned values are the same that were passed to [NewSectionReader]
 # # when the [SectionReader] was created.
-# fn (s *SectionReader) Outer() (r ReaderAt, off int64, n int64) {
+# fn (s *SectionReader) Outer() (r ReaderAt, off int64, n int64) 
 # 	return s.r, s.base, s.n
-# }
+# 
 
 # # An OffsetWriter maps writes at offset base to offset base+off in the underlying writer.
-# type OffsetWriter struct {
+# type OffsetWriter struct 
 # 	w    WriterAt
 # 	base int64 # the original offset
 # 	off  int64 # the current offset
-# }
+# 
 
 # # NewOffsetWriter returns an [OffsetWriter] that writes to w
 # # starting at offset off.
-# fn NewOffsetWriter(w WriterAt, off int64) *OffsetWriter {
-# 	return &OffsetWriter{w, off, off}
-# }
+# fn NewOffsetWriter(w WriterAt, off int64) *OffsetWriter 
+# 	return &OffsetWriterw, off, off
+# 
 
-# fn (o *OffsetWriter) Write(p DynamicVector[Byte]) (n Int, err error) {
+# fn (o *OffsetWriter) Write(p DynamicVector[Byte]) (n Int, err error) 
 # 	n, err = o.w.WriteAt(p, o.off)
 # 	o.off += int64(n)
 # 	return
-# }
+# 
 
-# fn (o *OffsetWriter) WriteAt(p DynamicVector[Byte], off int64) (n Int, err error) {
-# 	if off < 0 {
+# fn (o *OffsetWriter) WriteAt(p DynamicVector[Byte], off int64) (n Int, err error) 
+# 	if off < 0 
 # 		return 0, errOffset
-# 	}
+# 	
 
 # 	off += o.base
 # 	return o.w.WriteAt(p, off)
-# }
+# 
 
-# fn (o *OffsetWriter) Seek(offset int64, whence Int) (int64, error) {
-# 	switch whence {
+# fn (o *OffsetWriter) Seek(offset int64, whence Int) (int64, error) 
+# 	switch whence 
 # 	default:
 # 		return 0, errWhence
 # 	case seek_start:
 # 		offset += o.base
 # 	case seek_current:
 # 		offset += o.off
-# 	}
-# 	if offset < o.base {
+# 	
+# 	if offset < o.base 
 # 		return 0, errOffset
-# 	}
+# 	
 # 	o.off = offset
 # 	return offset - o.base, nil
-# }
+# 
 
 # # TeeReader returns a [Reader] that writes to w what it reads from r.
 # # All reads from r performed through it are matched with
 # # corresponding writes to w. There is no internal buffering -
 # # the write must complete before the read completes.
 # # Any error encountered while writing is reported as a read error.
-# fn TeeReader(r Reader, w Writer) Reader {
-# 	return &teeReader{r, w}
-# }
+# fn TeeReader(r Reader, w Writer) Reader 
+# 	return &teeReaderr, w
+# 
 
-# type teeReader struct {
+# type teeReader struct 
 # 	r Reader
 # 	w Writer
-# }
+# 
 
-# fn (t *teeReader) Read(p DynamicVector[Byte]) (n Int, err error) {
+# fn (t *teeReader) Read(p DynamicVector[Byte]) (n Int, err error) 
 # 	n, err = t.r.Read(p)
-# 	if n > 0 {
-# 		if n, err := t.w.Write(p[:n]); err != nil {
+# 	if n > 0 
+# 		if n, err := t.w.Write(p[:n]); err != nil 
 # 			return n, err
-# 		}
-# 	}
+# 		
+# 	
 # 	return
-# }
+# 
 
 # # Discard is a [Writer] on which all Write calls succeed
 # # without doing anything.
-# var Discard Writer = discard{}
+# var Discard Writer = discard
 
-# type discard struct{}
+# type discard struct
 
 # # discard implements ReaderFrom as an optimization so Copy to
 # # io.Discard can avoid doing unnecessary work.
-# var _ ReaderFrom = discard{}
+# var _ ReaderFrom = discard
 
-# fn (discard) Write(p DynamicVector[Byte]) (Int, error) {
+# fn (discard) Write(p DynamicVector[Byte]) (Int, error) 
 # 	return len(p), nil
-# }
+# 
 
-# fn (discard) WriteString(s string) (Int, error) {
+# fn (discard) WriteString(s: String) (Int, error) 
 # 	return len(s), nil
-# }
+# 
 
-# var blackHolePool = sync.Pool{
-# 	New: fn() any {
+# var blackHolePool = sync.Pool
+# 	New: fn() any 
 # 		b := make(DynamicVector[Byte], 8192)
 # 		return &b
-# 	},
-# }
+# 	,
+# 
 
-# fn (discard) ReadFrom(r Reader) (n int64, err error) {
+# fn (discard) ReadFrom(r Reader) (n int64, err error) 
 # 	bufp := blackHolePool.Get().(*DynamicVector[Byte])
 # 	readSize := 0
-# 	for {
+# 	for 
 # 		readSize, err = r.Read(*bufp)
 # 		n += int64(readSize)
-# 		if err != nil {
+# 		if err != nil 
 # 			blackHolePool.Put(bufp)
-# 			if err == EOF {
+# 			if err == EOF 
 # 				return n, nil
-# 			}
+# 			
 # 			return
-# 		}
-# 	}
-# }
+# 		
+# 	
+# 
 
 # # NopCloser returns a [ReadCloser] with a no-op Close method wrapping
 # # the provided [Reader] r.
 # # If r implements [WriterTo], the returned [ReadCloser] will implement [WriterTo]
 # # by forwarding calls to r.
-# fn NopCloser(r Reader) ReadCloser {
-# 	if _, ok := r.(WriterTo); ok {
-# 		return nopCloserWriterTo{r}
-# 	}
-# 	return nopCloser{r}
-# }
+# fn NopCloser(r Reader) ReadCloser 
+# 	if _, ok := r.(WriterTo); ok 
+# 		return nopCloserWriterTor
+# 	
+# 	return nopCloserr
+# 
 
-# type nopCloser struct {
+# type nopCloser struct 
 # 	Reader
-# }
+# 
 
-# fn (nopCloser) Close() error { return nil }
+# fn (nopCloser) Close() error  return nil 
 
-# type nopCloserWriterTo struct {
+# type nopCloserWriterTo struct 
 # 	Reader
-# }
+# 
 
-# fn (nopCloserWriterTo) Close() error { return nil }
+# fn (nopCloserWriterTo) Close() error  return nil 
 
-# fn (c nopCloserWriterTo) WriteTo(w Writer) (n int64, err error) {
+# fn (c nopCloserWriterTo) WriteTo(w Writer) (n int64, err error) 
 # 	return c.Reader.(WriterTo).WriteTo(w)
-# }
+# 
 
 # # ReadAll reads from r until an error or EOF and returns the data it read.
 # # A successful call returns err == nil, not err == EOF. Because ReadAll is
 # # defined to read from src until EOF, it does not treat an EOF from Read
 # # as an error to be reported.
-# fn ReadAll(r Reader) (DynamicVector[Byte], error) {
+# fn ReadAll(r Reader) (DynamicVector[Byte], error) 
 # 	b := make(DynamicVector[Byte], 0, 512)
-# 	for {
+# 	for 
 # 		n, err := r.Read(b[len(b):cap(b)])
 # 		b = b[:len(b)+n]
-# 		if err != nil {
-# 			if err == EOF {
+# 		if err != nil 
+# 			if err == EOF 
 # 				err = nil
-# 			}
+# 			
 # 			return b, err
-# 		}
+# 		
 
-# 		if len(b) == cap(b) {
+# 		if len(b) == cap(b) 
 # 			# Add more capacity (let append pick how much).
 # 			b = append(b, 0)[:len(b)]
-# 		}
-# 	}
-# }
+# 		
+# 	
+# 
