@@ -2,7 +2,7 @@ from weave.gojo.bytes import buffer
 from weave.gojo.bytes import bytes as bt
 from weave.gojo.bytes.bytes import Byte
 from weave.ansi import writer
-from weave.ansi.ansi import is_terminator, Marker
+from weave.ansi.ansi import is_terminator, Marker, printable_rune_width
 from weave.stdlib.builtins.string import __string__mul__, strip
 from weave.stdlib.builtins.vector import contains
 
@@ -30,7 +30,7 @@ struct Writer:
     # ansi sequences intact.
     fn write(inout self, b: DynamicVector[Byte]) raises -> Int:
         # TODO: Normally rune length
-        let tw = len(self.tail)
+        let tw = printable_rune_width(self.tail)
         if self.width < UInt8(tw):
             return self.ansi_writer.forward.write_string(self.tail)
 
