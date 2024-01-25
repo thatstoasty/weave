@@ -9,8 +9,10 @@ from weave import margin
 fn main() raises:
     # print(wrap.to_string("Hello Sekai!", 5))
     # print(wordwrap.to_string("Hello Sekai!", 6))
+    # print(wrap.to_string("Hello Sekai!", 5))
+    print(wrap.to_string(wordwrap.to_string("Hello Sekai!", 6), 6))
     # print(indent.to_string("Hello\nWorld\n  TEST!", 5))
-    print(dedent.to_string("    Line 1!\n  Line 2!"))
+    # print(dedent.to_string("    Line 1!\n  Line 2!"))
     # print(padding.to_string("Hello\nWorld\nThis is my text!", 15, True))
     # print(truncate.to_string("abcdefghikl\nasjdn", 5))
     # print(padding.to_string(wrap.to_string("Hello Sekai!", 5), 5))
