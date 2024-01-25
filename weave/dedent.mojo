@@ -38,22 +38,18 @@ fn min_indent(s: String) -> Int:
 
 fn dedent(s: String, indent: Int) raises -> String:
     var omitted: Int = 0
-    var should_omit: Bool = True
-    var vec: DynamicVector[Byte] = DynamicVector[Byte]()
+    var vec = DynamicVector[Byte]()
     var buf: buffer.Buffer = buffer.new_buffer(buf=vec)
     var i: Int = 0
 
     while i < len(s):
         if s[i] == "\t" or s[i] == " ":
-            if should_omit:
-                if omitted < indent:
-                    omitted += 1
-                    continue
-                should_omit = False
-            _ = buf.write_byte(ord(s[i]))
+            if omitted < indent:
+                omitted += 1
+            else:
+                _ = buf.write_byte(ord(s[i]))
         elif s[i] == "\n":
             omitted = 0
-            should_omit = True
             _ = buf.write_byte(ord(s[i]))
         else:
             _ = buf.write_byte(ord(s[i]))
