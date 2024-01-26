@@ -168,7 +168,7 @@ fn bytes(b: DynamicVector[Byte], limit: Int) raises -> DynamicVector[Byte]:
 
 # String is shorthand for declaring a new default WordWrap instance,
 # used to immediately wrap a string.
-fn to_string(s: String, limit: Int) raises -> String:
+fn string(s: String, limit: Int) raises -> String:
     var buf = s._buffer
     buf = trim_null_characters(buf)
     let b = bytes(buf, limit)

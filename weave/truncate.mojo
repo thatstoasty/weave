@@ -102,7 +102,7 @@ fn bytes_with_tail(
 
 # String is shorthand for declaring a new default truncate-writer instance,
 # used to immediately truncate a string.
-fn to_string(s: String, width: UInt8) raises -> String:
+fn string(s: String, width: UInt8) raises -> String:
     return string_with_tail(s, width, "")
 
 

@@ -120,7 +120,7 @@ fn bytes(inout b: DynamicVector[Byte], limit: Int) raises -> DynamicVector[Byte]
 
 # String is shorthand for declaring a new default Wrap instance,
 # used to immediately wrap a string.
-fn to_string(s: String, limit: Int) raises -> String:
+fn string(s: String, limit: Int) raises -> String:
     var buf = s._buffer
     let b = bytes(buf, limit)
 

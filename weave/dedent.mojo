@@ -4,7 +4,7 @@ from weave.gojo.bytes.bytes import Byte
 
 # String automatically detects the maximum indentation shared by all lines and
 # trims them accordingly.
-fn to_string(s: String) raises -> String:
+fn string(s: String) raises -> String:
     let indent = min_indent(s)
     if indent == 0:
         return s

@@ -113,7 +113,7 @@ fn bytes(b: DynamicVector[Byte], width: UInt8) raises -> DynamicVector[Byte]:
 
 # String is shorthand for declaring a new default padding-writer instance,
 # used to immediately pad a string.
-fn to_string(s: String, width: UInt8) raises -> String:
+fn string(s: String, width: UInt8) raises -> String:
     let buf = s._buffer
     let b = bytes(buf, width)
 

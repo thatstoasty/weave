@@ -91,7 +91,7 @@ fn bytes(inout b: DynamicVector[Byte], indent: UInt8) raises -> DynamicVector[By
 
 # String is shorthand for declaring a new default indent-writer instance,
 # used to immediately indent a string.
-fn to_string(s: String, indent: UInt8) raises -> String:
+fn string(s: String, indent: UInt8) raises -> String:
     var buf = s._buffer
     let b = bytes(buf, indent)
 

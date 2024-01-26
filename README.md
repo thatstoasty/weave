@@ -17,7 +17,7 @@ from weave import padding
 from weave import truncate
 
 fn main() raises:
-    print(wrap.to_string("Hello Sekai!", 5))
+    print(wrap.string("Hello Sekai!", 5))
 ```
 
 Output
@@ -41,7 +41,7 @@ from weave import padding
 from weave import truncate
 
 fn main() raises:
-    print(wordwrap.to_string("Hello Sekai!", 6))
+    print(wordwrap.string("Hello Sekai!", 6))
 ```
 
 Output
@@ -49,6 +49,15 @@ Output
 Hello
 Sekai!
 ```
+
+### ANSI Example
+
+```go
+print(wordwrap.string("I really \x1B[38;2;249;38;114mlove\x1B[0m Mojo!", 10))
+```
+
+![ANSI Example Output](https://github.com/thatstoasty/weave/blob/main/weave.png)
+
 
 ## Indent
 The `indent` module lets you indent strings or entire blocks of text.
@@ -62,7 +71,7 @@ from weave import padding
 from weave import truncate
 
 fn main() raises:
-    print(indent.to_string("Hello\nWorld\n  TEST!", 5))
+    print(indent.string("Hello\nWorld\n  TEST!", 5))
 ```
 
 Output
@@ -85,7 +94,7 @@ from weave import padding
 from weave import truncate
 
 fn main() raises:
-    print(dedent.to_string("    Line 1!\n  Line 2!"))
+    print(dedent.string("    Line 1!\n  Line 2!"))
 ```
 
 Output
@@ -106,7 +115,7 @@ from weave import padding
 from weave import truncate
 
 fn main() raises:
-    print(padding.to_string("Hello\nWorld\nThis is my text!", 15))
+    print(padding.string("Hello\nWorld\nThis is my text!", 15))
 ```
 
 Output
@@ -126,7 +135,7 @@ from weave import padding
 from weave import truncate
 
 fn main() raises:
-    print(truncate.to_string("abcdefghikl\nasjdn", 5))
+    print(truncate.string("abcdefghikl\nasjdn", 5))
 ```
 
 Output
@@ -141,7 +150,7 @@ from weave import padding
 
 
 fn main() raises:
-    print(padding.to_string(wrap.to_string("Hello Sekai!", 5), 5))
+    print(padding.string(wrap.string("Hello Sekai!", 5), 5))
 ```
 
 Output

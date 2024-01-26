@@ -60,7 +60,7 @@ fn bytes(
 
 # String is shorthand for declaring a new default margin-writer instance,
 # used to immediately apply margin a string.
-fn to_string(s: String, width: UInt8, margin: UInt8) raises -> String:
+fn string(s: String, width: UInt8, margin: UInt8) raises -> String:
     let buf = s._buffer
     let b = bytes(buf, width, margin)
 
