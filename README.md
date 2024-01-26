@@ -30,8 +30,6 @@ Sekai
 ## Wordwrap
 The `wordwrap` package lets you word-wrap strings or entire blocks of text.
 
-TODO: Doesn't work correctly with ANSI sequences yet.
-
 ```python
 from weave import indent
 from weave import wrap
