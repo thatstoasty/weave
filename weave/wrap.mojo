@@ -125,4 +125,3 @@ fn to_string(s: String, limit: Int) raises -> String:
     let b = bytes(buf, limit)
 
     return bt.to_string(b)
-

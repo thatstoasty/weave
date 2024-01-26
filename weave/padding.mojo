@@ -103,8 +103,7 @@ fn new_writer(width: UInt8) raises -> Writer:
 
 # Bytes is shorthand for declaring a new default padding-writer instance,
 # used to immediately pad a byte slice.
-fn bytes(
-    b: DynamicVector[Byte], width: UInt8) raises -> DynamicVector[Byte]:
+fn bytes(b: DynamicVector[Byte], width: UInt8) raises -> DynamicVector[Byte]:
     var f = new_writer(width)
     _ = f.write(b)
     _ = f.flush()
