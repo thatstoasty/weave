@@ -5,6 +5,8 @@ Ported from/inspired by: https://github.com/muesli/reflow/tree/master
 
 > NOTE: This is not a 1:1 port or stable due to missing features in Mojo, and the fact that I'm learning how to work with buffers as I go!
 
+I've only tested this on MacOS VSCode terminal so far, so your mileage may vary!
+
 ## Wrap (Unconditional Wrapping)
 The `wrap` module lets you unconditionally wrap strings or entire blocks of text.
 
