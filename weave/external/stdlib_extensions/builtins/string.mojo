@@ -1,4 +1,4 @@
-from ._list import list
+from ..builtins._generic_list import list
 
 alias _ALL_WHITESPACES = " \t\n\r\x0b\f"
 

@@ -1,5 +1,6 @@
-from weave.gojo.bytes import buffer
-from weave.gojo.bytes.bytes import Byte
+from .external.gojo.buffers import _buffer
+from .external.gojo.buffers._bytes import Byte
+from .external.gojo.external.stdlib_extensions.builtins import bytes
 
 
 # String automatically detects the maximum indentation shared by all lines and
@@ -38,8 +39,8 @@ fn min_indent(s: String) -> Int:
 
 fn dedent(s: String, indent: Int) raises -> String:
     var omitted: Int = 0
-    var vec = DynamicVector[Byte]()
-    var buf: buffer.Buffer = buffer.new_buffer(buf=vec)
+    var vec: bytes = bytes()
+    var buf = _buffer.new_buffer(buf=vec)
     var i: Int = 0
 
     while i < len(s):

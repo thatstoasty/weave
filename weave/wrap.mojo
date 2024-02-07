@@ -1,9 +1,9 @@
-from weave.gojo.bytes import buffer
-from weave.gojo.bytes import bytes as bt
-from weave.gojo.bytes.bytes import Byte
 from weave.ansi import writer
 from weave.ansi.ansi import is_terminator, Marker, printable_rune_width
-from weave.stdlib.builtins.string import __string__mul__
+from .external.gojo.buffers import _buffer
+from .external.gojo.buffers import _bytes as bt
+from .external.stdlib_extensions.builtins.string import __string__mul__
+from .external.gojo.external.stdlib_extensions.builtins import bytes
 
 
 alias default_newline = "\n"
@@ -17,7 +17,7 @@ struct Wrap:
     var preserve_space: Bool
     var tab_width: Int
 
-    var buf: buffer.Buffer
+    var buf: _buffer.Buffer
     var line_len: Int
     var ansi: Bool
     var forceful_newline: Bool
@@ -40,8 +40,8 @@ struct Wrap:
         self.tab_width = tab_width
 
         # TODO: Ownership of the DynamicVector should be moved to the buffer
-        var buf = DynamicVector[Byte]()
-        self.buf = buffer.new_buffer(buf=buf)
+        var buf = bytes()
+        self.buf = _buffer.new_buffer(buf=buf)
         self.line_len = line_len
         self.ansi = ansi
         self.forceful_newline = forceful_newline
@@ -50,7 +50,7 @@ struct Wrap:
         _ = self.buf.write_byte(ord(self.newline))
         self.line_len = 0
 
-    fn write(inout self, b: DynamicVector[Byte]) raises -> Int:
+    fn write(inout self, b: bytes) raises -> Int:
         let tab_space = __string__mul__(" ", self.tab_width)
         var s = bt.to_string(b)
 
@@ -95,7 +95,7 @@ struct Wrap:
         return len(b)
 
     # Bytes returns the wrapped result as a byte slice.
-    fn bytes(self) -> DynamicVector[Byte]:
+    fn bytes(self) -> bytes:
         return self.buf.bytes()
 
     # String returns the wrapped result as a string.
@@ -111,7 +111,7 @@ fn new_writer(limit: Int) -> Wrap:
 
 # Bytes is shorthand for declaring a new default Wrap instance,
 # used to immediately wrap a byte slice.
-fn bytes(inout b: DynamicVector[Byte], limit: Int) raises -> DynamicVector[Byte]:
+fn to_bytes(inout b: bytes, limit: Int) raises -> bytes:
     var f = new_writer(limit)
     _ = f.write(b)
 
@@ -121,7 +121,7 @@ fn bytes(inout b: DynamicVector[Byte], limit: Int) raises -> DynamicVector[Byte]
 # String is shorthand for declaring a new default Wrap instance,
 # used to immediately wrap a string.
 fn string(s: String, limit: Int) raises -> String:
-    var buf = s._buffer
-    let b = bytes(buf, limit)
+    var buf = bt.to_bytes(s)
+    let b = to_bytes(buf, limit)
 
     return bt.to_string(b)

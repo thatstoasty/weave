@@ -1,11 +1,11 @@
-from weave.gojo.bytes import buffer
-from weave.gojo.bytes import bytes as bt
-from weave.gojo.bytes.bytes import Byte
-from weave.gojo.bytes.util import trim_null_characters
 from weave.ansi import writer
 from weave.ansi.ansi import is_terminator, Marker, printable_rune_width
-from weave.stdlib.builtins.string import __string__mul__, strip
-from weave.stdlib.builtins.vector import contains
+from .external.gojo.buffers import _buffer
+from .external.gojo.buffers import _bytes as bt
+from .external.gojo.buffers.util import trim_null_characters
+from .external.stdlib_extensions.builtins.string import __string__mul__, strip
+from .external.stdlib_extensions.builtins.vector import contains
+from .external.gojo.external.stdlib_extensions.builtins import bytes
 
 
 alias default_newline = "\n"
@@ -22,9 +22,9 @@ struct WordWrap:
     var newline: String
     var keep_newlines: Bool
 
-    var buf: buffer.Buffer
-    var space: buffer.Buffer
-    var word: buffer.Buffer
+    var buf: _buffer.Buffer
+    var space: _buffer.Buffer
+    var word: _buffer.Buffer
 
     var line_len: Int
     var ansi: Bool
@@ -42,14 +42,14 @@ struct WordWrap:
         self.breakpoint = breakpoint
         self.newline = newline
         self.keep_newlines = keep_newlines
-        var buf = DynamicVector[Byte]()
-        self.buf = buffer.new_buffer(buf=buf)
+        var buf = bytes()
+        self.buf = _buffer.new_buffer(buf=buf)
 
-        var space = DynamicVector[Byte]()
-        self.space = buffer.Buffer(buf=space)
+        var space = bytes()
+        self.space = _buffer.Buffer(buf=space)
 
-        var word = DynamicVector[Byte]()
-        self.word = buffer.Buffer(buf=word)
+        var word = bytes()
+        self.word = _buffer.Buffer(buf=word)
 
         self.line_len = line_len
         self.ansi = ansi
@@ -76,7 +76,7 @@ struct WordWrap:
         self.space.reset()
 
     # write is used to write more content to the word-wrap buffer.
-    fn write(inout self, b: DynamicVector[Byte]) raises -> Int:
+    fn write(inout self, b: bytes) raises -> Int:
         if self.limit == 0:
             return self.buf.write(b)
 
@@ -142,7 +142,7 @@ struct WordWrap:
         self.add_word()
 
     # bytes returns the word-wrapped result as a byte slice.
-    fn bytes(inout self) -> DynamicVector[Byte]:
+    fn bytes(inout self) -> bytes:
         return self.buf.bytes()
 
     # String returns the word-wrapped result as a string.
@@ -158,7 +158,7 @@ fn new_writer(limit: Int) -> WordWrap:
 
 # bytes is shorthand for declaring a new default WordWrap instance,
 # used to immediately word-wrap a byte slice.
-fn bytes(b: DynamicVector[Byte], limit: Int) raises -> DynamicVector[Byte]:
+fn to_bytes(b: bytes, limit: Int) raises -> bytes:
     var f = new_writer(limit)
     _ = f.write(b)
     _ = f.close()
@@ -169,16 +169,8 @@ fn bytes(b: DynamicVector[Byte], limit: Int) raises -> DynamicVector[Byte]:
 # String is shorthand for declaring a new default WordWrap instance,
 # used to immediately wrap a string.
 fn string(s: String, limit: Int) raises -> String:
-    var buf = s._buffer
+    var buf = bt.to_bytes(s)
     buf = trim_null_characters(buf)
-    let b = bytes(buf, limit)
+    let b = to_bytes(buf, limit)
 
     return bt.to_string(b)
-
-
-fn in_group(a: DynamicVector[Byte], c: Byte) -> Bool:
-    for i in range(len(a)):
-        let v = a[i]
-        if v == c:
-            return True
-    return False

@@ -1,4 +1,5 @@
-from weave.gojo.bytes.bytes import Byte
+from ..external.gojo.buffers._bytes import Byte
+from ..external.gojo.external.stdlib_extensions.builtins import bytes
 
 alias Marker = "\x1B"
 alias Rune = Int32
@@ -23,7 +24,7 @@ fn len_without_ansi(s: String) -> Int:
     return length
 
 
-fn len_without_ansi(s: DynamicVector[Byte]) -> Int:
+fn len_without_ansi(s: bytes) -> Int:
     """Returns the length of a string without ANSI escape codes."""
     var length = 0
     var in_ansi = False

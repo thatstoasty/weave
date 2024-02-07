@@ -1,29 +1,30 @@
-from weave.gojo.bytes import buffer
-from weave.gojo.bytes.bytes import Byte, has_suffix
+from ..external.gojo.buffers import _buffer
+from ..external.gojo.buffers._bytes import Byte, has_suffix, to_bytes
+from ..external.gojo.external.stdlib_extensions.builtins import bytes
 from weave.ansi.ansi import Marker, is_terminator
 
 
 @value
 struct Writer:
-    var forward: buffer.Buffer
+    var forward: _buffer.Buffer
     var ansi: Bool
-    var ansi_seq: buffer.Buffer
-    var last_seq: buffer.Buffer
+    var ansi_seq: _buffer.Buffer
+    var last_seq: _buffer.Buffer
     var seq_changed: Bool
-    var rune_buf: DynamicVector[Byte]
+    var rune_buf: bytes
 
-    fn __init__(inout self, inout forward: buffer.Buffer) raises:
+    fn __init__(inout self, inout forward: _buffer.Buffer) raises:
         self.forward = forward
         self.ansi = False
-        var ansi_buf = DynamicVector[Byte]()
-        var last_buf = DynamicVector[Byte]()
-        self.ansi_seq = buffer.Buffer(buf=ansi_buf)
-        self.last_seq = buffer.Buffer(buf=last_buf)
+        var ansi_buf = bytes()
+        var last_buf = bytes()
+        self.ansi_seq = _buffer.Buffer(buf=ansi_buf)
+        self.last_seq = _buffer.Buffer(buf=last_buf)
         self.seq_changed = False
-        self.rune_buf = DynamicVector[Byte]()
+        self.rune_buf = bytes()
 
     # write is used to write content to the ANSI buffer.
-    fn write(inout self, b: DynamicVector[Byte]) raises -> Int:
+    fn write(inout self, b: bytes) raises -> Int:
         """TODO: Writing bytes instead of encoded runes rn."""
         for i in range(len(b)):
             let char = chr(int(b[i]))
@@ -40,7 +41,7 @@ struct Writer:
                 if is_terminator(b[i]):
                     self.ansi = False
 
-                    if has_suffix(self.ansi_seq.bytes(), (String("[0m")._buffer)):
+                    if has_suffix(self.ansi_seq.bytes(), (to_bytes(String("[0m")))):
                         # reset sequence
                         self.last_seq.reset()
                         self.seq_changed = False
@@ -60,7 +61,7 @@ struct Writer:
 
     # fn writeRune(r rune) (Int, error)
     #     if self.runeBuf == nil
-    #         self.runeBuf = make(DynamicVector[Byte], utf8.UTFMax)
+    #         self.runeBuf = make(bytes, utf8.UTFMax)
     #
     #     n := utf8.EncodeRune(self.runeBuf, r)
     #     return self.Forward.write(self.runeBuf[:n])
@@ -72,10 +73,10 @@ struct Writer:
     fn reset_ansi(inout self) raises:
         if not self.seq_changed:
             return
-        let ansi_code = String("\x1b[0m")._buffer
-        var b = DynamicVector[Byte]()
+        let ansi_code = to_bytes(String("\x1b[0m"))
+        var b = bytes()
         for i in range(len(ansi_code)):
-            b.append(ansi_code[i])
+            b[i] = ansi_code[i]
         _ = self.forward.write(b)
 
     fn restore_ansi(inout self) raises:

@@ -1,10 +1,10 @@
-from weave.gojo.bytes import buffer
-from weave.gojo.bytes import bytes as bt
-from weave.gojo.bytes.bytes import Byte
 from weave.ansi import writer
 from weave.ansi.ansi import is_terminator, Marker
-from weave.stdlib.builtins.string import __string__mul__, strip
-from weave.stdlib.builtins.vector import contains
+from .external.gojo.buffers import _buffer
+from .external.gojo.buffers import _bytes as bt
+from .external.stdlib_extensions.builtins.string import __string__mul__, strip
+from .external.stdlib_extensions.builtins.vector import contains
+from .external.gojo.external.stdlib_extensions.builtins import bytes
 
 
 @value
@@ -12,8 +12,8 @@ struct Writer:
     var padding: UInt8
 
     var ansi_writer: writer.Writer
-    var buf: buffer.Buffer
-    var cache: buffer.Buffer
+    var buf: _buffer.Buffer
+    var cache: _buffer.Buffer
     var line_len: Int
     var ansi: Bool
 
@@ -27,17 +27,17 @@ struct Writer:
         self.line_len = line_len
         self.ansi = ansi
 
-        var buf = DynamicVector[Byte]()
-        self.buf = buffer.Buffer(buf=buf)
+        var buf = bytes()
+        self.buf = _buffer.Buffer(buf=buf)
 
-        var cache = DynamicVector[Byte]()
-        self.cache = buffer.Buffer(buf=cache)
+        var cache = bytes()
+        self.cache = _buffer.Buffer(buf=cache)
 
         # This copies the buffer? I should probably try redoing this all with proper pointers
         self.ansi_writer = writer.Writer(self.buf)
 
     # write is used to write content to the padding buffer.
-    fn write(inout self, b: DynamicVector[Byte]) raises -> Int:
+    fn write(inout self, b: bytes) raises -> Int:
         for i in range(len(b)):
             let c = chr(int(b[i]))
 
@@ -55,21 +55,21 @@ struct Writer:
                     self.ansi_writer.reset_ansi()
                     self.line_len = 0
 
-            _ = self.ansi_writer.write(c._buffer)
+            _ = self.ansi_writer.write(bt.to_bytes(c))
 
         return len(b)
 
     fn pad(inout self) raises:
         if self.padding > 0 and UInt8(self.line_len) < self.padding:
             let padding = __string__mul__(" ", int(self.padding) - self.line_len)
-            _ = self.ansi_writer.write(padding._buffer)
+            _ = self.ansi_writer.write(bt.to_bytes(padding))
 
     # close will finish the padding operation.
     fn close(inout self) raises:
         return self.flush()
 
     # Bytes returns the padded result as a byte slice.
-    fn bytes(self) -> DynamicVector[Byte]:
+    fn bytes(self) -> bytes:
         return self.cache.bytes()
 
     # String returns the padded result as a string.
@@ -103,7 +103,7 @@ fn new_writer(width: UInt8) raises -> Writer:
 
 # Bytes is shorthand for declaring a new default padding-writer instance,
 # used to immediately pad a byte slice.
-fn bytes(b: DynamicVector[Byte], width: UInt8) raises -> DynamicVector[Byte]:
+fn to_bytes(b: bytes, width: UInt8) raises -> bytes:
     var f = new_writer(width)
     _ = f.write(b)
     _ = f.flush()
@@ -114,7 +114,7 @@ fn bytes(b: DynamicVector[Byte], width: UInt8) raises -> DynamicVector[Byte]:
 # String is shorthand for declaring a new default padding-writer instance,
 # used to immediately pad a string.
 fn string(s: String, width: UInt8) raises -> String:
-    let buf = s._buffer
-    let b = bytes(buf, width)
+    var buf = bt.to_bytes(s)
+    let b = to_bytes(buf, width)
 
     return bt.to_string(b)

@@ -1,20 +1,20 @@
-from weave.gojo.bytes import buffer
-from weave.gojo.bytes import bytes as bt
-from weave.gojo.bytes.bytes import Byte
 from weave.ansi import writer
 from weave.ansi.ansi import is_terminator, Marker
-from weave.stdlib.builtins.string import __string__mul__, strip, _ALL_WHITESPACES
-from weave.stdlib.builtins.vector import contains
+from .external.gojo.buffers import _buffer
+from .external.gojo.buffers import _bytes as bt
+from .external.stdlib_extensions.builtins.string import __string__mul__, strip
+from .external.stdlib_extensions.builtins.vector import contains
+from .external.gojo.external.stdlib_extensions.builtins import bytes
 
 
 struct Writer:
-    var buf: buffer.Buffer
+    var buf: _buffer.Buffer
     var pw: padding.Writer
     var iw: indent.Writer
 
     fn __init__(inout self, pw: padding.Writer, iw: indent.Writer):
-        var buf = DynamicVector[Byte]()
-        self.buf = buffer.Buffer(buf=buf)
+        var buf = bytes()
+        self.buf = _buffer.Buffer(buf=buf)
         self.pw = pw
         self.iw = iw
 
@@ -25,14 +25,14 @@ struct Writer:
         _ = self.buf.write(self.pw.bytes())
 
     # Bytes returns the result as a byte slice.
-    fn bytes(self) -> DynamicVector[Byte]:
+    fn bytes(self) -> bytes:
         return self.buf.bytes()
 
     # String returns the result as a string.
     fn string(self) -> String:
         return self.buf.string()
 
-    fn write(inout self, b: DynamicVector[Byte]) raises -> Int:
+    fn write(inout self, b: bytes) raises -> Int:
         _ = self.iw.write(b)
         let n = self.pw.write(self.iw.bytes())
 
@@ -48,9 +48,7 @@ fn new_writer(width: UInt8, margin: UInt8) raises -> Writer:
 
 # Bytes is shorthand for declaring a new default margin-writer instance,
 # used to immediately apply a margin to a byte slice.
-fn bytes(
-    b: DynamicVector[Byte], width: UInt8, margin: UInt8
-) raises -> DynamicVector[Byte]:
+fn to_bytes(b: bytes, width: UInt8, margin: UInt8) raises -> bytes:
     var f = new_writer(width, margin)
     _ = f.write(b)
     _ = f.close()
@@ -61,7 +59,7 @@ fn bytes(
 # String is shorthand for declaring a new default margin-writer instance,
 # used to immediately apply margin a string.
 fn string(s: String, width: UInt8, margin: UInt8) raises -> String:
-    let buf = s._buffer
-    let b = bytes(buf, width, margin)
+    var buf = bt.to_bytes(s)
+    let b = to_bytes(buf, width, margin)
 
     return bt.to_string(b)

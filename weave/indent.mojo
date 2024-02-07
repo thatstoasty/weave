@@ -1,9 +1,9 @@
-from weave.gojo.bytes import buffer
-from weave.gojo.bytes import bytes as bt
-from weave.gojo.bytes.bytes import Byte
-from weave.ansi import writer
-from weave.ansi.ansi import is_terminator
-from weave.stdlib.builtins.string import __string__mul__
+from .ansi import writer
+from .ansi.ansi import is_terminator
+from .external.gojo.buffers import _buffer
+from .external.gojo.buffers import _bytes as bt
+from .external.stdlib_extensions.builtins.string import __string__mul__
+from .external.gojo.external.stdlib_extensions.builtins import bytes
 
 
 @value
@@ -11,15 +11,15 @@ struct Writer:
     var indent: UInt8
 
     var ansi_writer: writer.Writer
-    var buf: buffer.Buffer
+    var buf: _buffer.Buffer
     var skip_indent: Bool
     var ansi: Bool
 
     fn __init__(inout self, indent: UInt8) raises:
         self.indent = indent
 
-        var buf = DynamicVector[Byte]()
-        self.buf = buffer.new_buffer(buf)
+        var buf = bytes()
+        self.buf = _buffer.new_buffer(buf)
         self.ansi_writer = writer.Writer(
             self.buf
         )  # This copies the buffer? I should probably try redoing this all with proper pointers
@@ -27,7 +27,7 @@ struct Writer:
         self.ansi = False
 
     # Bytes returns the indented result as a byte slice.
-    fn bytes(self) -> DynamicVector[Byte]:
+    fn bytes(self) -> bytes:
         return self.ansi_writer.forward.bytes()
 
     # String returns the indented result as a string.
@@ -35,7 +35,7 @@ struct Writer:
         return self.ansi_writer.forward.string()
 
     # write is used to write content to the indent buffer.
-    fn write(inout self, b: DynamicVector[Byte]) raises -> Int:
+    fn write(inout self, b: bytes) raises -> Int:
         for i in range(len(b)):
             let c = chr(int(b[i]))
             if c == "\x1B":
@@ -48,7 +48,9 @@ struct Writer:
             else:
                 if not self.skip_indent:
                     self.ansi_writer.reset_ansi()
-                    let indent = __string__mul__(String(" "), int(self.indent))._buffer
+                    let indent = bt.to_bytes(
+                        __string__mul__(String(" "), int(self.indent))
+                    )
                     _ = self.ansi_writer.write(indent)
 
                     self.skip_indent = True
@@ -58,7 +60,7 @@ struct Writer:
                     # end of current line
                     self.skip_indent = False
 
-            _ = self.ansi_writer.write(c._buffer)
+            _ = self.ansi_writer.write(bt.to_bytes(c))
 
         return len(b)
 
@@ -82,7 +84,7 @@ fn new_writer(indent: UInt8) raises -> Writer:
 
 # Bytes is shorthand for declaring a new default indent-writer instance,
 # used to immediately indent a byte slice.
-fn bytes(inout b: DynamicVector[Byte], indent: UInt8) raises -> DynamicVector[Byte]:
+fn to_bytes(inout b: bytes, indent: UInt8) raises -> bytes:
     var f = new_writer(indent)
     _ = f.write(b)
 
@@ -92,7 +94,7 @@ fn bytes(inout b: DynamicVector[Byte], indent: UInt8) raises -> DynamicVector[By
 # String is shorthand for declaring a new default indent-writer instance,
 # used to immediately indent a string.
 fn string(s: String, indent: UInt8) raises -> String:
-    var buf = s._buffer
-    let b = bytes(buf, indent)
+    var buf = bt.to_bytes(s)
+    let b = to_bytes(buf, indent)
 
     return bt.to_string(b)

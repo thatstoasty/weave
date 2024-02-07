@@ -1,4 +1,6 @@
-from ._list import list
+from ._generic_list import list
+from ._hash import HashableCollectionElement
+from ._dict import HashableStr
 
 
 fn reverse[T: CollectionElement](vector: DynamicVector[T]) -> DynamicVector[T]:
@@ -30,13 +32,6 @@ fn contains(vector: DynamicVector[StringLiteral], value: StringLiteral) -> Bool:
     return False
 
 
-fn contains(vector: String, value: String) -> Bool:
-    for i in range(len(vector)):
-        if vector[i] == value:
-            return True
-    return False
-
-
 fn contains(vector: list[String], value: String) raises -> Bool:
     for item in vector:
         if item == value:
@@ -45,6 +40,13 @@ fn contains(vector: list[String], value: String) raises -> Bool:
 
 
 fn contains(vector: list[StringLiteral], value: StringLiteral) raises -> Bool:
+    for item in vector:
+        if item == value:
+            return True
+    return False
+
+
+fn contains(vector: list[HashableStr], value: HashableStr) raises -> Bool:
     for item in vector:
         if item == value:
             return True
@@ -69,3 +71,10 @@ fn to_string(vector: list[String]) raises -> String:
             result += String(", ")
     result += String("]")
     return result
+
+
+fn extend[
+    T: CollectionElement
+](inout vector: DynamicVector[T], other: DynamicVector[T]) raises:
+    for i in range(other.size):
+        vector.push_back(other[i])
