@@ -1,5 +1,5 @@
-from weave.ansi import writer
-from weave.ansi.ansi import is_terminator, Marker, printable_rune_width
+from .ansi import writer
+from .ansi.ansi import is_terminator, Marker, printable_rune_width
 from .external.gojo.buffers import _buffer
 from .external.gojo.buffers import _bytes as bt
 from .external.gojo.buffers.util import trim_null_characters

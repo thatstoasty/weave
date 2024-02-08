@@ -1,7 +1,7 @@
 from ..external.gojo.buffers import _buffer
 from ..external.gojo.buffers._bytes import Byte, has_suffix, to_bytes
 from ..external.gojo.external.stdlib_extensions.builtins import bytes
-from weave.ansi.ansi import Marker, is_terminator
+from .ansi import Marker, is_terminator
 
 
 @value
