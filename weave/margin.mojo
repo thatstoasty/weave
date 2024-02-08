@@ -1,10 +1,10 @@
 from .ansi import writer
 from .ansi.ansi import is_terminator, Marker
-from .external.gojo.buffers import _buffer
-from .external.gojo.buffers import _bytes as bt
-from .external.stdlib_extensions.builtins.string import __string__mul__, strip
-from .external.stdlib_extensions.builtins.vector import contains
-from .external.gojo.external.stdlib_extensions.builtins import bytes
+from .gojo.buffers import _buffer
+from .gojo.buffers import _bytes as bt
+from .gojo.stdlib_extensions.builtins import bytes
+from .stdlib_extensions.builtins.string import __string__mul__, strip
+from .stdlib_extensions.builtins.vector import contains
 
 
 struct Writer:

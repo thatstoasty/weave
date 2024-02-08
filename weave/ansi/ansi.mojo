@@ -1,5 +1,5 @@
-from ..external.gojo.buffers._bytes import Byte
-from ..external.gojo.external.stdlib_extensions.builtins import bytes
+from ..gojo.buffers._bytes import Byte
+from ..gojo.stdlib_extensions.builtins import bytes
 
 alias Marker = "\x1B"
 alias Rune = Int32

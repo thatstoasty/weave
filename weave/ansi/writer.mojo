@@ -1,6 +1,6 @@
-from ..external.gojo.buffers import _buffer
-from ..external.gojo.buffers._bytes import Byte, has_suffix, to_bytes
-from ..external.gojo.external.stdlib_extensions.builtins import bytes
+from ..gojo.buffers import _buffer
+from ..gojo.buffers._bytes import Byte, has_suffix, to_bytes
+from ..gojo.stdlib_extensions.builtins import bytes
 from .ansi import Marker, is_terminator
 
 

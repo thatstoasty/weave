@@ -1,11 +1,11 @@
 from .ansi import writer
 from .ansi.ansi import is_terminator, Marker, printable_rune_width
-from .external.gojo.buffers import _buffer
-from .external.gojo.buffers import _bytes as bt
-from .external.gojo.buffers.util import trim_null_characters
-from .external.stdlib_extensions.builtins.string import __string__mul__, strip
-from .external.stdlib_extensions.builtins.vector import contains
-from .external.gojo.external.stdlib_extensions.builtins import bytes
+from .gojo.buffers import _buffer
+from .gojo.buffers import _bytes as bt
+from .gojo.buffers.util import trim_null_characters
+from .gojo.stdlib_extensions.builtins import bytes
+from .stdlib_extensions.builtins.string import __string__mul__, strip
+from .stdlib_extensions.builtins.vector import contains
 
 
 alias default_newline = "\n"
