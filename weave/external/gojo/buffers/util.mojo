@@ -17,7 +17,7 @@ fn copy(inout target: bytes, source: bytes) -> Int:
     # TODO: End of strings include a null character which terminates the string. This is a hack to not write those to the buffer for now.
     for i in range(len(source)):
         if source[i] != 0:
-            target[i] = source[i]
+            target._vector.append(source[i])
             count += 1
 
     target = trim_null_characters(target)

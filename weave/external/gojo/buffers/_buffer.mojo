@@ -201,8 +201,7 @@ struct Buffer(io.Writer, io.Reader):
         # if not ok:
         #     m = self.grow(p.size)
         # self.buf = get_slice[Byte](self.buf, m, len(self.buf))
-        let sl = trim_null_characters(b)
-        return copy(self.buf, sl)
+        return copy(self.buf, b)
 
     fn write_string(inout self, s: String) raises -> Int:
         """Appends the contents of s to the buffer, growing the buffer as
@@ -220,7 +219,6 @@ struct Buffer(io.Writer, io.Reader):
 
         # TODO: Hacky way of getting rid of all the extra 0s that are added to the vector when it's resized.
         var s_buffer = to_bytes(s)
-        s_buffer = trim_null_characters(s_buffer)
 
         return copy(self.buf, s_buffer)
 

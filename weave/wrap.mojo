@@ -10,7 +10,7 @@ alias default_newline = "\n"
 alias default_tab_width = 4
 
 
-struct Wrap:
+struct Wrap():
     var limit: Int
     var newline: String
     var keep_newlines: Bool
@@ -90,7 +90,6 @@ struct Wrap:
                 self.line_len += width
 
             _ = self.buf.write_string(c)
-            # _ = self.buf.write_byte(ord(c))
 
         return len(b)
 
