@@ -1,10 +1,8 @@
+from .gojo.bytes import buffer
+from .gojo.builtins._bytes import Bytes, to_bytes, to_string
 from .ansi import writer
 from .ansi.ansi import is_terminator, Marker
-from .gojo.buffers import _buffer
-from .gojo.buffers import _bytes as bt
-from .gojo.stdlib_extensions.builtins import bytes
-from .stdlib_extensions.builtins.string import __string__mul__, strip
-from .stdlib_extensions.builtins.vector import contains
+from .utils import __string__mul__, strip
 
 
 @value
@@ -12,8 +10,8 @@ struct Writer:
     var padding: UInt8
 
     var ansi_writer: writer.Writer
-    var buf: _buffer.Buffer
-    var cache: _buffer.Buffer
+    var buf: buffer.Buffer
+    var cache: buffer.Buffer
     var line_len: Int
     var ansi: Bool
 
@@ -27,17 +25,17 @@ struct Writer:
         self.line_len = line_len
         self.ansi = ansi
 
-        var buf = bytes()
-        self.buf = _buffer.Buffer(buf=buf)
+        var buf = Bytes()
+        self.buf = buffer.Buffer(buf=buf)
 
-        var cache = bytes()
-        self.cache = _buffer.Buffer(buf=cache)
+        var cache = Bytes()
+        self.cache = buffer.Buffer(buf=cache)
 
         # This copies the buffer? I should probably try redoing this all with proper pointers
         self.ansi_writer = writer.Writer(self.buf)
 
     # write is used to write content to the padding buffer.
-    fn write(inout self, b: bytes) raises -> Int:
+    fn write(inout self, b: Bytes) raises -> Int:
         for i in range(len(b)):
             let c = chr(int(b[i]))
 
@@ -55,25 +53,25 @@ struct Writer:
                     self.ansi_writer.reset_ansi()
                     self.line_len = 0
 
-            _ = self.ansi_writer.write(bt.to_bytes(c))
+            _ = self.ansi_writer.write(to_bytes(c))
 
         return len(b)
 
     fn pad(inout self) raises:
         if self.padding > 0 and UInt8(self.line_len) < self.padding:
             let padding = __string__mul__(" ", int(self.padding) - self.line_len)
-            _ = self.ansi_writer.write(bt.to_bytes(padding))
+            _ = self.ansi_writer.write(to_bytes(padding))
 
     # close will finish the padding operation.
     fn close(inout self) raises:
         return self.flush()
 
     # Bytes returns the padded result as a byte slice.
-    fn bytes(self) -> bytes:
+    fn bytes(self) raises -> Bytes:
         return self.cache.bytes()
 
     # String returns the padded result as a string.
-    fn string(self) -> String:
+    fn string(self) raises -> String:
         return self.cache.string()
 
     # flush will finish the padding operation. Always call it before trying to
@@ -103,7 +101,7 @@ fn new_writer(width: UInt8) raises -> Writer:
 
 # Bytes is shorthand for declaring a new default padding-writer instance,
 # used to immediately pad a byte slice.
-fn to_bytes(b: bytes, width: UInt8) raises -> bytes:
+fn bytes(b: Bytes, width: UInt8) raises -> Bytes:
     var f = new_writer(width)
     _ = f.write(b)
     _ = f.flush()
@@ -114,7 +112,7 @@ fn to_bytes(b: bytes, width: UInt8) raises -> bytes:
 # String is shorthand for declaring a new default padding-writer instance,
 # used to immediately pad a string.
 fn string(s: String, width: UInt8) raises -> String:
-    var buf = bt.to_bytes(s)
-    let b = to_bytes(buf, width)
+    var buf = to_bytes(s)
+    let b = bytes(buf, width)
 
-    return bt.to_string(b)
+    return to_string(b)

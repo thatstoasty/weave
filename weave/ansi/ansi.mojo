@@ -1,11 +1,10 @@
-from ..gojo.buffers._bytes import Byte
-from ..gojo.stdlib_extensions.builtins import bytes
+from ..gojo.builtins._bytes import Bytes
 
 alias Marker = "\x1B"
 alias Rune = Int32
 
 
-fn is_terminator(c: Byte) -> Bool:
+fn is_terminator(c: UInt8) -> Bool:
     return (c >= 0x40 and c <= 0x5A) or (c >= 0x61 and c <= 0x7A)
 
 
@@ -24,7 +23,7 @@ fn len_without_ansi(s: String) -> Int:
     return length
 
 
-fn len_without_ansi(s: bytes) -> Int:
+fn len_without_ansi(s: Bytes) -> Int:
     """Returns the length of a string without ANSI escape codes."""
     var length = 0
     var in_ansi = False

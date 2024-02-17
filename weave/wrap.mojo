@@ -1,9 +1,8 @@
+from .gojo.bytes import buffer
+from .gojo.builtins._bytes import Bytes, to_bytes, to_string
 from .ansi import writer
 from .ansi.ansi import is_terminator, Marker, printable_rune_width
-from .gojo.buffers import _buffer
-from .gojo.buffers import _bytes as bt
-from .stdlib_extensions.builtins.string import __string__mul__
-from .gojo.stdlib_extensions.builtins import bytes
+from .utils import __string__mul__
 
 
 alias default_newline = "\n"
@@ -17,7 +16,7 @@ struct Wrap():
     var preserve_space: Bool
     var tab_width: Int
 
-    var buf: _buffer.Buffer
+    var buf: buffer.Buffer
     var line_len: Int
     var ansi: Bool
     var forceful_newline: Bool
@@ -40,8 +39,8 @@ struct Wrap():
         self.tab_width = tab_width
 
         # TODO: Ownership of the DynamicVector should be moved to the buffer
-        var buf = bytes()
-        self.buf = _buffer.new_buffer(buf=buf)
+        var buf = Bytes()
+        self.buf = buffer.new_buffer(buf=buf)
         self.line_len = line_len
         self.ansi = ansi
         self.forceful_newline = forceful_newline
@@ -50,9 +49,9 @@ struct Wrap():
         _ = self.buf.write_byte(ord(self.newline))
         self.line_len = 0
 
-    fn write(inout self, b: bytes) raises -> Int:
+    fn write(inout self, b: Bytes) raises -> Int:
         let tab_space = __string__mul__(" ", self.tab_width)
-        var s = bt.to_string(b)
+        var s = to_string(b)
 
         s = s.replace("\t", tab_space)
         if not self.keep_newlines:
@@ -94,11 +93,11 @@ struct Wrap():
         return len(b)
 
     # Bytes returns the wrapped result as a byte slice.
-    fn bytes(self) -> bytes:
+    fn bytes(self) raises -> Bytes:
         return self.buf.bytes()
 
     # String returns the wrapped result as a string.
-    fn string(self) -> String:
+    fn string(self) raises -> String:
         return self.buf.string()
 
 
@@ -110,7 +109,7 @@ fn new_writer(limit: Int) -> Wrap:
 
 # Bytes is shorthand for declaring a new default Wrap instance,
 # used to immediately wrap a byte slice.
-fn to_bytes(inout b: bytes, limit: Int) raises -> bytes:
+fn bytes(inout b: Bytes, limit: Int) raises -> Bytes:
     var f = new_writer(limit)
     _ = f.write(b)
 
@@ -120,7 +119,7 @@ fn to_bytes(inout b: bytes, limit: Int) raises -> bytes:
 # String is shorthand for declaring a new default Wrap instance,
 # used to immediately wrap a string.
 fn string(s: String, limit: Int) raises -> String:
-    var buf = bt.to_bytes(s)
-    let b = to_bytes(buf, limit)
+    var buf = to_bytes(s)
+    let b = bytes(buf, limit)
 
-    return bt.to_string(b)
+    return to_string(b)

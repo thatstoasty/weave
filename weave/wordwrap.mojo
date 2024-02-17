@@ -1,11 +1,8 @@
+from .gojo.bytes import buffer
+from .gojo.builtins._bytes import Bytes, to_bytes, to_string, trim_null_characters
 from .ansi import writer
 from .ansi.ansi import is_terminator, Marker, printable_rune_width
-from .gojo.buffers import _buffer
-from .gojo.buffers import _bytes as bt
-from .gojo.buffers.util import trim_null_characters
-from .gojo.stdlib_extensions.builtins import bytes
-from .stdlib_extensions.builtins.string import __string__mul__, strip
-from .stdlib_extensions.builtins.vector import contains
+from .utils import __string__mul__, strip
 
 
 alias default_newline = "\n"
@@ -22,9 +19,9 @@ struct WordWrap:
     var newline: String
     var keep_newlines: Bool
 
-    var buf: _buffer.Buffer
-    var space: _buffer.Buffer
-    var word: _buffer.Buffer
+    var buf: buffer.Buffer
+    var space: buffer.Buffer
+    var word: buffer.Buffer
 
     var line_len: Int
     var ansi: Bool
@@ -42,14 +39,14 @@ struct WordWrap:
         self.breakpoint = breakpoint
         self.newline = newline
         self.keep_newlines = keep_newlines
-        var buf = bytes()
-        self.buf = _buffer.new_buffer(buf=buf)
+        var buf = Bytes()
+        self.buf = buffer.new_buffer(buf=buf)
 
-        var space = bytes()
-        self.space = _buffer.Buffer(buf=space)
+        var space = Bytes()
+        self.space = buffer.Buffer(buf=space)
 
-        var word = bytes()
-        self.word = _buffer.Buffer(buf=word)
+        var word = Bytes()
+        self.word = buffer.Buffer(buf=word)
 
         self.line_len = line_len
         self.ansi = ansi
@@ -76,11 +73,11 @@ struct WordWrap:
         self.space.reset()
 
     # write is used to write more content to the word-wrap buffer.
-    fn write(inout self, b: bytes) raises -> Int:
+    fn write(inout self, b: Bytes) raises -> Int:
         if self.limit == 0:
             return self.buf.write(b)
 
-        var s = bt.to_string(b)
+        var s = to_string(b)
         if not self.keep_newlines:
             s = strip(s)
             s = s.replace("\n", " ")
@@ -141,12 +138,12 @@ struct WordWrap:
     fn close(inout self) raises:
         self.add_word()
 
-    # bytes returns the word-wrapped result as a byte slice.
-    fn bytes(inout self) -> bytes:
+    # Bytes returns the word-wrapped result as a byte slice.
+    fn bytes(inout self) raises -> Bytes:
         return self.buf.bytes()
 
     # String returns the word-wrapped result as a string.
-    fn string(inout self) -> String:
+    fn string(inout self) raises -> String:
         return self.buf.string()
 
 
@@ -156,9 +153,9 @@ fn new_writer(limit: Int) -> WordWrap:
     return WordWrap(limit=limit)
 
 
-# bytes is shorthand for declaring a new default WordWrap instance,
+# Bytes is shorthand for declaring a new default WordWrap instance,
 # used to immediately word-wrap a byte slice.
-fn to_bytes(b: bytes, limit: Int) raises -> bytes:
+fn bytes(b: Bytes, limit: Int) raises -> Bytes:
     var f = new_writer(limit)
     _ = f.write(b)
     _ = f.close()
@@ -169,8 +166,8 @@ fn to_bytes(b: bytes, limit: Int) raises -> bytes:
 # String is shorthand for declaring a new default WordWrap instance,
 # used to immediately wrap a string.
 fn string(s: String, limit: Int) raises -> String:
-    var buf = bt.to_bytes(s)
+    var buf = to_bytes(s)
     buf = trim_null_characters(buf)
-    let b = to_bytes(buf, limit)
+    let b = bytes(buf, limit)
 
-    return bt.to_string(b)
+    return to_string(b)
