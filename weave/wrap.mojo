@@ -1,5 +1,6 @@
 from .gojo.bytes import buffer
 from .gojo.builtins._bytes import Bytes, to_bytes, to_string
+from .gojo.io import traits
 from .ansi import writer
 from .ansi.ansi import is_terminator, Marker, printable_rune_width
 from .utils import __string__mul__
@@ -9,7 +10,8 @@ alias default_newline = "\n"
 alias default_tab_width = 4
 
 
-struct Wrap():
+@value
+struct Wrap(traits.Writer):
     var limit: Int
     var newline: String
     var keep_newlines: Bool
@@ -40,7 +42,7 @@ struct Wrap():
 
         # TODO: Ownership of the DynamicVector should be moved to the buffer
         var buf = Bytes()
-        self.buf = buffer.new_buffer(buf=buf)
+        self.buf = buffer.new_buffer(buf ^)
         self.line_len = line_len
         self.ansi = ansi
         self.forceful_newline = forceful_newline
@@ -49,9 +51,9 @@ struct Wrap():
         _ = self.buf.write_byte(ord(self.newline))
         self.line_len = 0
 
-    fn write(inout self, b: Bytes) raises -> Int:
+    fn write(inout self, src: Bytes) raises -> Int:
         let tab_space = __string__mul__(" ", self.tab_width)
-        var s = to_string(b)
+        var s = to_string(src)
 
         s = s.replace("\t", tab_space)
         if not self.keep_newlines:
@@ -60,7 +62,7 @@ struct Wrap():
         let width = printable_rune_width(s)
         if self.limit <= 0 or self.line_len + width <= self.limit:
             self.line_len += width
-            return self.buf.write(b)
+            return self.buf.write(src)
 
         for i in range(len(s)):
             let c = s[i]
@@ -90,7 +92,7 @@ struct Wrap():
 
             _ = self.buf.write_string(c)
 
-        return len(b)
+        return len(src)
 
     # Bytes returns the wrapped result as a byte slice.
     fn bytes(self) raises -> Bytes:

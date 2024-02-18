@@ -1,7 +1,7 @@
 from collections.optional import Optional
 from ..builtins import cap, copy
-from ..builtins._bytes import Bytes, Byte
-import ..io.traits as io
+from ..builtins._bytes import Bytes
+from ..io import traits as io
 
 
 # A Reader implements the io.Reader, io.ReaderAt, io.WriterTo, io.Seeker,
@@ -60,7 +60,7 @@ struct Reader(
         return n
 
     # ReadByte implements the [io.ByteReader] Interface.
-    fn read_byte(inout self) raises -> Byte:
+    fn read_byte(inout self) raises -> UInt8:
         self.prev_rune = -1
         if self.index >= len(self.s):
             raise Error("EOF")

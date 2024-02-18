@@ -1,11 +1,13 @@
 from .gojo.bytes import buffer
 from .gojo.builtins._bytes import Bytes, to_bytes, to_string
+from .gojo.io import traits
 from .ansi import writer
 from .ansi.ansi import is_terminator, Marker, printable_rune_width
 from .utils import __string__mul__, strip
 
 
-struct Writer:
+@value
+struct Writer(traits.Writer):
     var width: UInt8
     var tail: String
 
@@ -19,14 +21,14 @@ struct Writer:
         self.ansi = ansi
 
         var buf = Bytes()
-        self.buf = buffer.Buffer(buf=buf)
+        self.buf = buffer.Buffer(buf ^)
 
         # I think it's copying the buffer for now instead of using the actual buffer
         self.ansi_writer = writer.Writer(self.buf)
 
     # write truncates content at the given printable cell width, leaving any
     # ansi sequences intact.
-    fn write(inout self, b: Bytes) raises -> Int:
+    fn write(inout self, src: Bytes) raises -> Int:
         # TODO: Normally rune length
         let tw = printable_rune_width(self.tail)
         if self.width < UInt8(tw):
@@ -35,13 +37,13 @@ struct Writer:
         self.width -= UInt8(tw)
         var cur_width: UInt8 = 0
 
-        for i in range(len(b)):
-            let c = chr(int(b[i]))
+        for i in range(len(src)):
+            let c = chr(int(src[i]))
             if c == Marker:
                 # ANSI escape sequence
                 self.ansi = True
             elif self.ansi:
-                if is_terminator(b[i]):
+                if is_terminator(src[i]):
                     # ANSI sequence terminated
                     self.ansi = False
             else:
@@ -53,9 +55,9 @@ struct Writer:
                     self.ansi_writer.reset_ansi()
                 return n
 
-            _ = self.ansi_writer.write_byte(b[i])
+            _ = self.ansi_writer.write_byte(src[i])
 
-        return len(b)
+        return len(src)
 
     # Bytes returns the truncated result as a byte slice.
     fn bytes(self) raises -> Bytes:

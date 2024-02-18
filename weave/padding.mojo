@@ -1,12 +1,13 @@
 from .gojo.bytes import buffer
 from .gojo.builtins._bytes import Bytes, to_bytes, to_string
+from .gojo.io import traits
 from .ansi import writer
 from .ansi.ansi import is_terminator, Marker
 from .utils import __string__mul__, strip
 
 
 @value
-struct Writer:
+struct Writer(traits.Writer):
     var padding: UInt8
 
     var ansi_writer: writer.Writer
@@ -26,23 +27,23 @@ struct Writer:
         self.ansi = ansi
 
         var buf = Bytes()
-        self.buf = buffer.Buffer(buf=buf)
+        self.buf = buffer.Buffer(buf ^)
 
         var cache = Bytes()
-        self.cache = buffer.Buffer(buf=cache)
+        self.cache = buffer.Buffer(cache ^)
 
         # This copies the buffer? I should probably try redoing this all with proper pointers
         self.ansi_writer = writer.Writer(self.buf)
 
     # write is used to write content to the padding buffer.
-    fn write(inout self, b: Bytes) raises -> Int:
-        for i in range(len(b)):
-            let c = chr(int(b[i]))
+    fn write(inout self, src: Bytes) raises -> Int:
+        for i in range(len(src)):
+            let c = chr(int(src[i]))
 
             if c == Marker:
                 self.ansi = True
             elif self.ansi:
-                if is_terminator(b[i]):
+                if is_terminator(src[i]):
                     self.ansi = False
             else:
                 self.line_len += len(c)
@@ -55,7 +56,7 @@ struct Writer:
 
             _ = self.ansi_writer.write(to_bytes(c))
 
-        return len(b)
+        return len(src)
 
     fn pad(inout self) raises:
         if self.padding > 0 and UInt8(self.line_len) < self.padding:

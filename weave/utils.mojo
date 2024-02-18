@@ -1,5 +1,6 @@
 alias _ALL_WHITESPACES = " \t\n\r\x0b\f"
 
+
 fn __string__mul__(input_string: String, n: Int) -> String:
     var result: String = ""
     for _ in range(n):

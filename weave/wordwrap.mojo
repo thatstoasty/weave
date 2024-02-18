@@ -1,5 +1,6 @@
 from .gojo.bytes import buffer
 from .gojo.builtins._bytes import Bytes, to_bytes, to_string, trim_null_characters
+from .gojo.io import traits
 from .ansi import writer
 from .ansi.ansi import is_terminator, Marker, printable_rune_width
 from .utils import __string__mul__, strip
@@ -13,7 +14,8 @@ alias default_breakpoint = "-"
 # WordWrap contains settings and state for customisable text reflowing with
 # support for ANSI escape sequences. This means you can style your terminal
 # output without affecting the word wrapping algorithm.
-struct WordWrap:
+@value
+struct WordWrap(traits.Writer):
     var limit: Int
     var breakpoint: String
     var newline: String
@@ -40,13 +42,13 @@ struct WordWrap:
         self.newline = newline
         self.keep_newlines = keep_newlines
         var buf = Bytes()
-        self.buf = buffer.new_buffer(buf=buf)
+        self.buf = buffer.new_buffer(buf ^)
 
         var space = Bytes()
-        self.space = buffer.Buffer(buf=space)
+        self.space = buffer.Buffer(space ^)
 
         var word = Bytes()
-        self.word = buffer.Buffer(buf=word)
+        self.word = buffer.Buffer(word ^)
 
         self.line_len = line_len
         self.ansi = ansi
@@ -73,11 +75,11 @@ struct WordWrap:
         self.space.reset()
 
     # write is used to write more content to the word-wrap buffer.
-    fn write(inout self, b: Bytes) raises -> Int:
+    fn write(inout self, src: Bytes) raises -> Int:
         if self.limit == 0:
-            return self.buf.write(b)
+            return self.buf.write(src)
 
-        var s = to_string(b)
+        var s = to_string(src)
         if not self.keep_newlines:
             s = strip(s)
             s = s.replace("\n", " ")
@@ -131,7 +133,7 @@ struct WordWrap:
                 ):
                     self.add_newline()
 
-        return len(b)
+        return len(src)
 
     # close will finish the word-wrap operation. Always call it before trying to
     # retrieve the final result.

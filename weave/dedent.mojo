@@ -38,8 +38,8 @@ fn min_indent(s: String) -> Int:
 
 fn dedent(s: String, indent: Int) raises -> String:
     var omitted: Int = 0
-    var vec: Bytes = Bytes()
-    var buf = buffer.new_buffer(buf=vec)
+    var vec = Bytes()
+    var buf = buffer.new_buffer(vec ^)
     var i: Int = 0
 
     while i < len(s):

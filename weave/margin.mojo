@@ -1,18 +1,20 @@
 from .gojo.bytes import buffer
 from .gojo.builtins._bytes import Bytes, to_bytes, to_string
+from .gojo.io import traits
 from .ansi import writer
 from .ansi.ansi import is_terminator, Marker
 from .utils import __string__mul__, strip
 
 
-struct Writer:
+@value
+struct Writer(traits.Writer):
     var buf: buffer.Buffer
     var pw: padding.Writer
     var iw: indent.Writer
 
-    fn __init__(inout self, pw: padding.Writer, iw: indent.Writer):
+    fn __init__(inout self, inout pw: padding.Writer, inout iw: indent.Writer):
         var buf = Bytes()
-        self.buf = buffer.Buffer(buf=buf)
+        self.buf = buffer.Buffer(buf ^)
         self.pw = pw
         self.iw = iw
 
@@ -30,18 +32,18 @@ struct Writer:
     fn string(self) raises -> String:
         return self.buf.string()
 
-    fn write(inout self, b: Bytes) raises -> Int:
-        _ = self.iw.write(b)
+    fn write(inout self, src: Bytes) raises -> Int:
+        _ = self.iw.write(src)
         let n = self.pw.write(self.iw.bytes())
 
         return n
 
 
 fn new_writer(width: UInt8, margin: UInt8) raises -> Writer:
-    let pw = padding.new_writer(width)
-    let iw = indent.new_writer(margin)
+    var pw = padding.new_writer(width)
+    var iw = indent.new_writer(margin)
 
-    return Writer(pw=pw, iw=iw)
+    return Writer(pw, iw)
 
 
 # Bytes is shorthand for declaring a new default margin-writer instance,

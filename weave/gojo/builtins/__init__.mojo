@@ -1,4 +1,4 @@
-from ._bytes import Bytes, Byte
+from ._bytes import Bytes
 
 
 fn copy(

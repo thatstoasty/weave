@@ -1,5 +1,7 @@
 from ..gojo.bytes import buffer
 from ..gojo.builtins._bytes import Bytes, has_suffix, to_bytes
+
+# from ..gojo.io import traits
 from .ansi import Marker, is_terminator
 
 
@@ -15,29 +17,27 @@ struct Writer:
     fn __init__(inout self, inout forward: buffer.Buffer) raises:
         self.forward = forward
         self.ansi = False
-        var ansi_buf = Bytes()
-        var last_buf = Bytes()
-        self.ansi_seq = buffer.Buffer(buf=ansi_buf)
-        self.last_seq = buffer.Buffer(buf=last_buf)
+        self.ansi_seq = buffer.new_buffer()
+        self.last_seq = buffer.new_buffer()
         self.seq_changed = False
         self.rune_buf = Bytes()
 
     # write is used to write content to the ANSI buffer.
-    fn write(inout self, b: Bytes) raises -> Int:
+    fn write(inout self, src: Bytes) raises -> Int:
         """TODO: Writing Bytes instead of encoded runes rn."""
-        for i in range(len(b)):
-            let char = chr(int(b[i]))
+        for i in range(len(src)):
+            let char = chr(int(src[i]))
             # TODO: Skipping null terminator Bytes for now until I figure out how to deal with them. They come from the empty spaces in a dynamicvector
-            if b[i] == 0:
+            if src[i] == 0:
                 pass
             elif char == Marker:
                 # ANSI escape sequence
                 self.ansi = True
                 self.seq_changed = True
-                _ = self.ansi_seq.write_byte(b[i])
+                _ = self.ansi_seq.write_byte(src[i])
             elif self.ansi:
-                _ = self.ansi_seq.write_byte(b[i])
-                if is_terminator(b[i]):
+                _ = self.ansi_seq.write_byte(src[i])
+                if is_terminator(src[i]):
                     self.ansi = False
 
                     if has_suffix(self.ansi_seq.bytes(), (to_bytes(String("[0m")))):
@@ -50,12 +50,12 @@ struct Writer:
 
                     _ = self.ansi_seq.write_to(self.forward)
             else:
-                _ = self.write_byte(b[i])
+                _ = self.write_byte(src[i])
 
-        return len(b)
+        return len(src)
 
-    fn write_byte(inout self, b: UInt8) raises -> Int:
-        _ = self.forward.write_byte(b)
+    fn write_byte(inout self, byte: UInt8) raises -> Int:
+        _ = self.forward.write_byte(byte)
         return 1
 
     # fn writeRune(r rune) (Int, error)

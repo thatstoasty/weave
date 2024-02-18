@@ -1,6 +1,3 @@
-alias Byte = UInt8
-
-
 fn get_mapping_byte_to_value() -> DynamicVector[String]:
     var bytes_display = DynamicVector[String]()
     bytes_display.append("\\x00")
@@ -274,7 +271,6 @@ struct Bytes(Stringable, Sized, CollectionElement):
     """
 
     var _vector: DynamicVector[UInt8]
-    alias mapping = get_mapping_byte_to_value()
 
     fn __init__(inout self):
         self._vector = DynamicVector[UInt8]()
@@ -300,9 +296,11 @@ struct Bytes(Stringable, Sized, CollectionElement):
         if limits.end == 9223372036854775807:
             end = len(self._vector)
         elif limits.end > self.__len__():
-            let error = "Bytes: Index out of range for limits.end. Received: " + str(limits.end) + " but the length is " + str(self._vector.__len__())
+            let error = "Bytes: Index out of range for limits.end. Received: " + str(
+                limits.end
+            ) + " but the length is " + str(self._vector.__len__())
             raise Error(error)
-        
+
         var new_bytes = Self()
         for i in range(limits.start, end, limits.step):
             new_bytes._vector.append(self[i])
@@ -338,10 +336,11 @@ struct Bytes(Stringable, Sized, CollectionElement):
             self._vector.push_back(other[i])
 
     fn __str__(self) -> String:
+        var mapping = get_mapping_byte_to_value()
         # TODO: Changed mapping to a var instead of alias. The alias would crash randomly.
         var result_string: String = "b'"
         for i in range(self.__len__()):
-            result_string += self.mapping[self._vector[i].to_int()]
+            result_string += mapping[self._vector[i].to_int()]
         result_string += "'"
         return result_string
 
@@ -385,7 +384,7 @@ fn to_bytes(s: String) -> Bytes:
     return b
 
 
-fn index_byte(b: Bytes, c: Byte) -> Int:
+fn index_byte(b: Bytes, c: UInt8) -> Int:
     let i = 0
     for i in range(len(b)):
         if b[i] == c:

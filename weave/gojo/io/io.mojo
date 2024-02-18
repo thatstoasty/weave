@@ -1,6 +1,6 @@
 from collections.optional import Optional
 from ..builtins import cap, copy
-from ..builtins._bytes import Bytes, Byte, to_bytes
+from ..builtins._bytes import Bytes, to_bytes
 from .traits import Reader, Writer, StringWriter, ErrShortBuffer, EOF
 
 
@@ -371,6 +371,7 @@ fn read_full[R: Reader](inout reader: R, dest: Bytes) raises -> Int:
 # fn (c nopCloserWriterTo) WriteTo(w Writer) (n int64, err error) {
 # 	return c.Reader.(WriterTo).WriteTo(w)
 # }
+
 
 # ReadAll reads from r until an error or EOF and returns the data it read.
 # A successful call returns err == nil, not err == EOF. Because ReadAll is

@@ -1,6 +1,20 @@
-from ..io.traits import Reader, Writer, ByteReader, ByteWriter, WriterTo, StringWriter, ReaderFrom
+from ..io.traits import (
+    Reader,
+    Writer,
+    ByteReader,
+    ByteWriter,
+    WriterTo,
+    StringWriter,
+    ReaderFrom,
+)
 from ..builtins import cap, copy
-from ..builtins._bytes import Bytes, Byte, index_byte, to_string, to_bytes, trim_null_characters
+from ..builtins._bytes import (
+    Bytes,
+    index_byte,
+    to_string,
+    to_bytes,
+    trim_null_characters,
+)
 
 
 alias Rune = Int32
@@ -54,7 +68,7 @@ struct Buffer(
     var off: Int  # read at &buf[off], write at &buf[len(buf)]
     var last_read: ReadOp  # last read operation, so that unread* can work correctly.
 
-    fn __init__(inout self, inout buf: Bytes):
+    fn __init__(inout self, owned buf: Bytes):
         self.buf = buf
         self.off = 0
         self.last_read = op_invalid
@@ -304,7 +318,7 @@ struct Buffer(
         self.reset()
         return n
 
-    fn write_byte(inout self, byte: Byte) raises -> Int:
+    fn write_byte(inout self, byte: UInt8) raises -> Int:
         """Appends the byte c to the buffer, growing the buffer as needed.
         The returned error is always nil, but is included to match [bufio.Writer]'s
         write_byte. If the buffer becomes too large, write_byte will panic with
@@ -333,7 +347,7 @@ struct Buffer(
     #     """
     #     # Compare as uint32 to correctly handle negative runes.
     #     if UInt32(r) < utf8.RuneSelf:
-    #         self.write_byte(Byte(r))
+    #         self.write_byte(UInt8(r))
     #         return 1
 
     #     self.last_read = op_invalid
@@ -387,7 +401,7 @@ struct Buffer(
 
         return data
 
-    fn read_byte(inout self) raises -> Byte:
+    fn read_byte(inout self) raises -> UInt8:
         """Reads and returns the next byte from the buffer.
         If no byte is available, it returns error io.EOF.
         """
@@ -458,7 +472,7 @@ struct Buffer(
         if self.off > 0:
             self.off -= 1
 
-    fn read_bytes(inout self, delim: Byte) raises -> Bytes:
+    fn read_bytes(inout self, delim: UInt8) raises -> Bytes:
         """Reads until the first occurrence of delim in the input,
         returning a slice containing the data up to and including the delimiter.
         If read_bytes encounters an error before finding a delimiter,
@@ -474,7 +488,7 @@ struct Buffer(
             lines[i] = sl[i]
         return lines
 
-    fn read_slice(inout self, delim: Byte) raises -> Bytes:
+    fn read_slice(inout self, delim: UInt8) raises -> Bytes:
         """Like read_bytes but returns a reference to internal buffer data."""
         let i = index_byte(self.buf[self.off :], delim)
         var end = self.off + i + 1
@@ -486,7 +500,7 @@ struct Buffer(
         self.last_read = op_read
         return line
 
-    fn read_string(inout self, delim: Byte) raises -> String:
+    fn read_string(inout self, delim: UInt8) raises -> String:
         """Reads until the first occurrence of delim in the input,
         returning a string containing the data up to and including the delimiter.
         If read_string encounters an error before finding a delimiter,
@@ -510,10 +524,10 @@ fn new_buffer() -> Buffer:
     sufficient to initialize a [Buffer].
     """
     var b = Bytes()
-    return Buffer(b)
+    return Buffer(b ^)
 
 
-fn new_buffer(inout buf: Bytes) -> Buffer:
+fn new_buffer(owned buf: Bytes) -> Buffer:
     """Creates and initializes a new [Buffer] using buf as its`
     initial contents. The new [Buffer] takes ownership of buf, and the
     caller should not use buf after this call. new_buffer is intended to
@@ -527,7 +541,7 @@ fn new_buffer(inout buf: Bytes) -> Buffer:
     return Buffer(buf)
 
 
-fn new_buffer_string(inout s: String) -> Buffer:
+fn new_buffer_string(owned s: String) -> Buffer:
     """Creates and initializes a new [Buffer] using string s as its
     initial contents. It is intended to prepare a buffer to read an existing
     string.
