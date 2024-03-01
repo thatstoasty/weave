@@ -19,7 +19,7 @@ from weave import padding
 from weave import truncate
 
 fn main() raises:
-    print(wrap.string("Hello Sekai!", 5))
+    print(wrap.apply_wrap("Hello Sekai!", 5))
 ```
 
 Output
@@ -41,7 +41,7 @@ from weave import padding
 from weave import truncate
 
 fn main() raises:
-    print(wordwrap.string("Hello Sekai!", 6))
+    print(wordwrap.apply_wordwrap("Hello Sekai!", 6))
 ```
 
 Output
@@ -53,7 +53,7 @@ Sekai!
 ### ANSI Example
 
 ```go
-print(wordwrap.string("I really \x1B[38;2;249;38;114mlove\x1B[0m Mojo!", 10))
+print(wordwrap.apply_wordwrap("I really \x1B[38;2;249;38;114mlove\x1B[0m Mojo!", 10))
 ```
 
 ![ANSI Example Output](https://github.com/thatstoasty/weave/blob/main/weave.png)
@@ -71,7 +71,7 @@ from weave import padding
 from weave import truncate
 
 fn main() raises:
-    print(indent.string("Hello\nWorld\n  TEST!", 5))
+    print(indent.apply_indent("Hello\nWorld\n  TEST!", 5))
 ```
 
 Output
@@ -94,7 +94,7 @@ from weave import padding
 from weave import truncate
 
 fn main() raises:
-    print(dedent.string("    Line 1!\n  Line 2!"))
+    print(dedent.apply_dedent("    Line 1!\n  Line 2!"))
 ```
 
 Output
@@ -115,7 +115,7 @@ from weave import padding
 from weave import truncate
 
 fn main() raises:
-    print(padding.string("Hello\nWorld\nThis is my text!", 15))
+    print(padding.apply_padding("Hello\nWorld\nThis is my text!", 15))
 ```
 
 Output
@@ -135,7 +135,7 @@ from weave import padding
 from weave import truncate
 
 fn main() raises:
-    print(truncate.string("abcdefghikl\nasjdn", 5))
+    print(truncate.apply_truncate("abcdefghikl\nasjdn", 5))
 ```
 
 Output
@@ -150,7 +150,7 @@ from weave import padding
 
 
 fn main() raises:
-    print(padding.string(wrap.string("Hello Sekai!", 5), 5))
+    print(padding.apply_padding(wrap.apply_wrap("Hello Sekai!", 5), 5))
 ```
 
 Output
