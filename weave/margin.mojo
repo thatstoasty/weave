@@ -1,20 +1,19 @@
 from .gojo.bytes import buffer
-from .gojo.builtins._bytes import Bytes, to_bytes, to_string
-from .gojo.io import traits
+from .gojo.builtins._bytes import Bytes
+from .gojo.io import traits as io
 from .ansi import writer
 from .ansi.ansi import is_terminator, Marker
 from .utils import __string__mul__, strip
 
 
 @value
-struct Writer(traits.Writer):
+struct Writer(StringableRaising, io.Writer):
     var buf: buffer.Buffer
     var pw: padding.Writer
     var iw: indent.Writer
 
     fn __init__(inout self, inout pw: padding.Writer, inout iw: indent.Writer):
-        var buf = Bytes()
-        self.buf = buffer.Buffer(buf ^)
+        self.buf = buffer.new_buffer()
         self.pw = pw
         self.iw = iw
 
@@ -29,12 +28,12 @@ struct Writer(traits.Writer):
         return self.buf.bytes()
 
     # String returns the result as a string.
-    fn string(self) raises -> String:
-        return self.buf.string()
+    fn __str__(self) raises -> String:
+        return str(self.buf)
 
     fn write(inout self, src: Bytes) raises -> Int:
         _ = self.iw.write(src)
-        let n = self.pw.write(self.iw.bytes())
+        var n = self.pw.write(self.iw.bytes())
 
         return n
 
@@ -48,7 +47,7 @@ fn new_writer(width: UInt8, margin: UInt8) raises -> Writer:
 
 # Bytes is shorthand for declaring a new default margin-writer instance,
 # used to immediately apply a margin to a byte slice.
-fn bytes(b: Bytes, width: UInt8, margin: UInt8) raises -> Bytes:
+fn apply_margin_to_bytes(owned b: Bytes, width: UInt8, margin: UInt8) raises -> Bytes:
     var f = new_writer(width, margin)
     _ = f.write(b)
     _ = f.close()
@@ -58,8 +57,8 @@ fn bytes(b: Bytes, width: UInt8, margin: UInt8) raises -> Bytes:
 
 # String is shorthand for declaring a new default margin-writer instance,
 # used to immediately apply margin a string.
-fn string(s: String, width: UInt8, margin: UInt8) raises -> String:
-    var buf = to_bytes(s)
-    let b = bytes(buf, width, margin)
+fn apply_margin(owned s: String, width: UInt8, margin: UInt8) raises -> String:
+    var buf = Bytes(s)
+    var b = apply_margin_to_bytes(buf ^, width, margin)
 
-    return to_string(b)
+    return str(b)

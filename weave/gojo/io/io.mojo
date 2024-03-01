@@ -1,6 +1,6 @@
 from collections.optional import Optional
 from ..builtins import cap, copy
-from ..builtins._bytes import Bytes, to_bytes
+from ..builtins._bytes import Bytes, Byte, Bytes
 from .traits import Reader, Writer, StringWriter, ErrShortBuffer, EOF
 
 
@@ -8,7 +8,7 @@ from .traits import Reader, Writer, StringWriter, ErrShortBuffer, EOF
 # If w implements [StringWriter], [StringWriter.WriteString] is invoked directly.
 # Otherwise, [Writer.Write] is called exactly once.
 fn write_string[T: Writer](inout w: T, s: String) raises -> Int:
-    var s_buffer = to_bytes(s)
+    var s_buffer = Bytes(s)
     return w.write(s_buffer)
 
 
@@ -31,7 +31,7 @@ fn read_at_least[R: Reader](inout reader: R, dest: Bytes, min: Int) raises -> In
     var n: Int = 0
     while n < min:
         var sl = dest[n:]
-        let nn: Int = reader.read(sl)
+        var nn: Int = reader.read(sl)
         n += nn
 
     return n
@@ -57,7 +57,7 @@ fn read_full[R: Reader](inout reader: R, dest: Bytes) raises -> Int:
 
 #     If dst implements [ReaderFrom], the copy is implemented using it.
 #     """
-#     let written = copy(dst, LimitReader(src, n))
+#     var written = copy(dst, LimitReader(src, n))
 #     if written == n:
 #         return n
 
@@ -103,16 +103,16 @@ fn read_full[R: Reader](inout reader: R, dest: Bytes) raises -> Int:
 #     """Actual implementation of Copy and CopyBuffer.
 #     if buf is nil, one is allocated.
 #     """
-#     let nr: Int
+#     var nr: Int
 #     nr = src.read(buf)
 #     while True:
 #         if nr > 0:
-#             let nw: Int
+#             var nw: Int
 #             nw = dst.write(get_slice(buf, 0, nr))
 #             if nw < 0 or nr < nw:
 #                 nw = 0
 
-#             let written = Int64(nw)
+#             var written = Int64(nw)
 #             if nr != nw:
 #                 raise Error(ErrShortWrite)
 

@@ -1,5 +1,5 @@
 from ..builtins import cap, copy
-from ..builtins._bytes import Bytes, to_bytes
+from ..builtins._bytes import Bytes, Byte
 from collections.optional import Optional
 
 alias Rune = Int32
@@ -77,7 +77,7 @@ alias ErrNoProgress = "multiple Read calls return no data or error"
 # nothing happened; in particular it does not indicate EOF.
 #
 # Implementations must not retain p.
-trait Reader(Movable):
+trait Reader(Copyable, Movable):
     fn read(inout self, inout dest: Bytes) raises -> Int:
         ...
 
@@ -91,7 +91,7 @@ trait Reader(Movable):
 # Write must not modify the slice data, even temporarily.
 #
 # Implementations must not retain p.
-trait Writer(Movable):
+trait Writer(Copyable, Movable):
     fn write(inout self, src: Bytes) raises -> Int:
         ...
 
@@ -100,7 +100,7 @@ trait Writer(Movable):
 #
 # The behavior of Close after the first call is undefined.
 # Specific implementations may document their own behavior.
-trait Closer(Movable):
+trait Closer(Copyable, Movable):
     fn close(inout self) raises:
         ...
 
@@ -120,7 +120,7 @@ trait Closer(Movable):
 # Seeking to any positive offset may be allowed, but if the new offset exceeds
 # the size of the underlying object the behavior of subsequent I/O operations
 # is implementation-dependent.
-trait Seeker(Movable):
+trait Seeker(Copyable, Movable):
     fn seek(inout self, offset: Int64, whence: Int) raises -> Int:
         ...
 
@@ -250,7 +250,7 @@ trait WriterAt:
 # processing. A [Reader] that does not implement  ByteReader
 # can be wrapped using bufio.NewReader to add this method.
 trait ByteReader:
-    fn read_byte(inout self) raises -> UInt8:
+    fn read_byte(inout self) raises -> Byte:
         ...
 
 
@@ -269,7 +269,7 @@ trait ByteScanner:
 
 # ByteWriter is the interface that wraps the WriteByte method.
 trait ByteWriter:
-    fn write_byte(inout self, byte: UInt8) raises -> Int:
+    fn write_byte(inout self, byte: Byte) raises -> Int:
         ...
 
 

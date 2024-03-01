@@ -1,4 +1,4 @@
-from ._bytes import Bytes
+from ._bytes import Bytes, Byte
 
 
 fn copy(
@@ -54,7 +54,7 @@ fn copy(inout target: Bytes, source: Bytes, start: Int = 0) -> Int:
     for i in range(len(source)):
         if source[i] != 0:
             if len(target) <= i + start:
-                target._vector.append(source[i])
+                target.append(source[i])
             else:
                 target[i + start] = source[i]
             count += 1
@@ -63,7 +63,7 @@ fn copy(inout target: Bytes, source: Bytes, start: Int = 0) -> Int:
 
 
 fn cap(buffer: Bytes) -> Int:
-    return buffer._vector.capacity
+    return buffer.capacity()
 
 
 fn cap[T: CollectionElement](iterable: DynamicVector[T]) -> Int:

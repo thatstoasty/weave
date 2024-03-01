@@ -3,6 +3,6 @@ from testing import testing
 
 
 fn main() raises:
-    let result: String = string("Hello\nWorld\n  TEST!", 5)
+    var result: String = string("Hello\nWorld\n  TEST!", 5)
     testing.assert_equal(result, String("     Hello\n     World\n       TEST!"))
 

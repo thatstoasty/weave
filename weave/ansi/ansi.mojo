@@ -4,7 +4,7 @@ alias Marker = "\x1B"
 alias Rune = Int32
 
 
-fn is_terminator(c: UInt8) -> Bool:
+fn is_terminator(c: Int8) -> Bool:
     return (c >= 0x40 and c <= 0x5A) or (c >= 0x61 and c <= 0x7A)
 
 
@@ -13,7 +13,7 @@ fn len_without_ansi(s: String) -> Int:
     var length = 0
     var in_ansi = False
     for i in range(len(s)):
-        let char = s[i]
+        var char = s[i]
         if char == "\x1b":
             in_ansi = True
         elif in_ansi and char == "m":
@@ -28,7 +28,7 @@ fn len_without_ansi(s: Bytes) -> Int:
     var length = 0
     var in_ansi = False
     for i in range(len(s)):
-        let char = s[i]
+        var char = s[i]
         if char == ord(Marker):
             in_ansi = True
         elif in_ansi and char == ord("m"):
@@ -45,7 +45,7 @@ fn printable_rune_width(s: String) -> Int:
     var ansi: Bool = False
 
     for i in range(len(s)):
-        let c = s[i]
+        var c = s[i]
         if c == Marker:
             # ANSI escape sequence
             ansi = True

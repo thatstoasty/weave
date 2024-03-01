@@ -4,8 +4,8 @@ from .gojo.builtins._bytes import Bytes
 
 # String automatically detects the maximum indentation shared by all lines and
 # trims them accordingly.
-fn string(s: String) raises -> String:
-    let indent = min_indent(s)
+fn apply_dedent(owned s: String) raises -> String:
+    var indent = min_indent(s)
     if indent == 0:
         return s
 
@@ -38,8 +38,7 @@ fn min_indent(s: String) -> Int:
 
 fn dedent(s: String, indent: Int) raises -> String:
     var omitted: Int = 0
-    var vec = Bytes()
-    var buf = buffer.new_buffer(vec ^)
+    var buf = buffer.new_buffer()
     var i: Int = 0
 
     while i < len(s):
@@ -56,4 +55,4 @@ fn dedent(s: String, indent: Int) raises -> String:
 
         i += 1
 
-    return buf.string()
+    return str(buf)

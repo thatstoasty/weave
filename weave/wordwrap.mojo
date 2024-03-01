@@ -1,6 +1,6 @@
 from .gojo.bytes import buffer
-from .gojo.builtins._bytes import Bytes, to_bytes, to_string, trim_null_characters
-from .gojo.io import traits
+from .gojo.builtins._bytes import Bytes, trim_null_characters
+from .gojo.io import traits as io
 from .ansi import writer
 from .ansi.ansi import is_terminator, Marker, printable_rune_width
 from .utils import __string__mul__, strip
@@ -15,7 +15,7 @@ alias default_breakpoint = "-"
 # support for ANSI escape sequences. This means you can style your terminal
 # output without affecting the word wrapping algorithm.
 @value
-struct WordWrap(traits.Writer):
+struct WordWrap(StringableRaising, io.Writer):
     var limit: Int
     var breakpoint: String
     var newline: String
@@ -41,29 +41,24 @@ struct WordWrap(traits.Writer):
         self.breakpoint = breakpoint
         self.newline = newline
         self.keep_newlines = keep_newlines
-        var buf = Bytes()
-        self.buf = buffer.new_buffer(buf ^)
-
-        var space = Bytes()
-        self.space = buffer.Buffer(space ^)
-
-        var word = Bytes()
-        self.word = buffer.Buffer(word ^)
+        self.buf = buffer.new_buffer()
+        self.space = buffer.new_buffer()
+        self.word = buffer.new_buffer()
 
         self.line_len = line_len
         self.ansi = ansi
 
     fn add_space(inout self) raises:
         """Write the content of the space buffer to the word-wrap buffer."""
-        self.line_len += self.space.len()
+        self.line_len += len(self.space)
         _ = self.buf.write(self.space.bytes())
         self.space.reset()
 
     fn add_word(inout self) raises:
         """Write the content of the word buffer to the word-wrap buffer."""
-        if self.word.len() > 0:
+        if len(self.word) > 0:
             self.add_space()
-            self.line_len += printable_rune_width(self.word.string())
+            self.line_len += printable_rune_width(str(self.word))
             _ = self.buf.write(self.word.bytes())
             self.word.reset()
 
@@ -79,13 +74,13 @@ struct WordWrap(traits.Writer):
         if self.limit == 0:
             return self.buf.write(src)
 
-        var s = to_string(src)
+        var s = str(src)
         if not self.keep_newlines:
             s = strip(s)
             s = s.replace("\n", " ")
 
         for i in range(len(s)):
-            let c = ord(s[i])
+            var c = ord(s[i])
             if c == ord(Marker):
                 # ANSI escape sequence
                 _ = self.word.write_byte(c)
@@ -98,8 +93,8 @@ struct WordWrap(traits.Writer):
             elif c == ord(self.newline):
                 # end of current line
                 # see if we can add the content of the space buffer to the current line
-                if self.word.len() == 0:
-                    if self.line_len + self.space.len() > self.limit:
+                if len(self.word) == 0:
+                    if self.line_len + len(self.space) > self.limit:
                         self.line_len = 0
                     else:
                         # preserve whitespace
@@ -126,10 +121,10 @@ struct WordWrap(traits.Writer):
                 # character limit
                 if (
                     self.line_len
-                    + self.space.len()
-                    + printable_rune_width(self.word.string())
+                    + len(self.space)
+                    + printable_rune_width(str(self.word))
                     > self.limit
-                    and printable_rune_width(self.word.string()) < self.limit
+                    and printable_rune_width(str(self.word)) < self.limit
                 ):
                     self.add_newline()
 
@@ -141,12 +136,12 @@ struct WordWrap(traits.Writer):
         self.add_word()
 
     # Bytes returns the word-wrapped result as a byte slice.
-    fn bytes(inout self) raises -> Bytes:
+    fn bytes(self) raises -> Bytes:
         return self.buf.bytes()
 
     # String returns the word-wrapped result as a string.
-    fn string(inout self) raises -> String:
-        return self.buf.string()
+    fn __str__(self) raises -> String:
+        return str(self.buf)
 
 
 # new_writer returns a new instance of a word-wrapping writer, initialized with
@@ -157,7 +152,7 @@ fn new_writer(limit: Int) -> WordWrap:
 
 # Bytes is shorthand for declaring a new default WordWrap instance,
 # used to immediately word-wrap a byte slice.
-fn bytes(b: Bytes, limit: Int) raises -> Bytes:
+fn apply_wordwrap_to_bytes(owned b: Bytes, limit: Int) raises -> Bytes:
     var f = new_writer(limit)
     _ = f.write(b)
     _ = f.close()
@@ -167,9 +162,9 @@ fn bytes(b: Bytes, limit: Int) raises -> Bytes:
 
 # String is shorthand for declaring a new default WordWrap instance,
 # used to immediately wrap a string.
-fn string(s: String, limit: Int) raises -> String:
-    var buf = to_bytes(s)
-    buf = trim_null_characters(buf)
-    let b = bytes(buf, limit)
+fn apply_wordwrap(s: String, limit: Int) raises -> String:
+    var buf = Bytes(s)
+    # buf = trim_null_characters(buf)
+    var b = apply_wordwrap_to_bytes(buf ^, limit)
 
-    return to_string(b)
+    return str(b)

@@ -3,7 +3,8 @@ from testing import testing
 
 
 fn test_wrap() raises:
+    print("Testing wrap")
     testing.assert_equal(
-        wrap.string("Hello Sekai!", 5),
-        String("Hello\nSekai!")
+        wrap.apply_wrap("Hello Sekai!", 5),
+        String("Hello\nSekai\n!")
     )

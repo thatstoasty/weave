@@ -1,12 +1,11 @@
 from ..gojo.bytes import buffer
-from ..gojo.builtins._bytes import Bytes, has_suffix, to_bytes
-
-# from ..gojo.io import traits
+from ..gojo.builtins._bytes import Bytes
+from ..gojo.io import traits as io
 from .ansi import Marker, is_terminator
 
 
 @value
-struct Writer:
+struct Writer(io.Writer):
     var forward: buffer.Buffer
     var ansi: Bool
     var ansi_seq: buffer.Buffer
@@ -14,7 +13,7 @@ struct Writer:
     var seq_changed: Bool
     var rune_buf: Bytes
 
-    fn __init__(inout self, inout forward: buffer.Buffer) raises:
+    fn __init__(inout self, owned forward: buffer.Buffer) raises:
         self.forward = forward
         self.ansi = False
         self.ansi_seq = buffer.new_buffer()
@@ -26,7 +25,7 @@ struct Writer:
     fn write(inout self, src: Bytes) raises -> Int:
         """TODO: Writing Bytes instead of encoded runes rn."""
         for i in range(len(src)):
-            let char = chr(int(src[i]))
+            var char = chr(int(src[i]))
             # TODO: Skipping null terminator Bytes for now until I figure out how to deal with them. They come from the empty spaces in a dynamicvector
             if src[i] == 0:
                 pass
@@ -40,7 +39,7 @@ struct Writer:
                 if is_terminator(src[i]):
                     self.ansi = False
 
-                    if has_suffix(self.ansi_seq.bytes(), (to_bytes(String("[0m")))):
+                    if self.ansi_seq.bytes().has_suffix(Bytes(String("[0m"))):
                         # reset sequence
                         self.last_seq.reset()
                         self.seq_changed = False
@@ -54,7 +53,7 @@ struct Writer:
 
         return len(src)
 
-    fn write_byte(inout self, byte: UInt8) raises -> Int:
+    fn write_byte(inout self, byte: Int8) raises -> Int:
         _ = self.forward.write_byte(byte)
         return 1
 
@@ -67,12 +66,12 @@ struct Writer:
     #
 
     fn last_sequence(self) raises -> String:
-        return self.last_seq.string()
+        return str(self.last_seq)
 
     fn reset_ansi(inout self) raises:
         if not self.seq_changed:
             return
-        let ansi_code = to_bytes(String("\x1b[0m"))
+        var ansi_code = Bytes(String("\x1b[0m"))
         var b = Bytes()
         for i in range(len(ansi_code)):
             b[i] = ansi_code[i]
@@ -80,3 +79,8 @@ struct Writer:
 
     fn restore_ansi(inout self) raises:
         _ = self.forward.write(self.last_seq.bytes())
+
+
+fn new_default_writer() raises -> Writer:
+    var buf = buffer.new_buffer()
+    return Writer(buf ^)

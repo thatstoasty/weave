@@ -1,7 +1,7 @@
 from collections.optional import Optional
 from ..builtins import cap, copy
-from ..builtins._bytes import Bytes
-from ..io import traits as io
+from ..builtins._bytes import Bytes, Byte
+import ..io.traits as io
 
 
 # A Reader implements the io.Reader, io.ReaderAt, io.WriterTo, io.Seeker,
@@ -37,8 +37,8 @@ struct Reader(
             raise Error("EOF")
 
         self.prev_rune = -1
-        let unread_bytes = self.s[int(self.index) :]
-        let n = copy(dest, unread_bytes)
+        var unread_bytes = self.s[int(self.index) :]
+        var n = copy(dest, unread_bytes)
 
         self.index += n
         return n
@@ -52,20 +52,20 @@ struct Reader(
         if off >= Int64(len(self.s)):
             raise Error("EOF")
 
-        let unread_bytes = self.s[int(off) :]
-        let n = copy(dest, unread_bytes)
+        var unread_bytes = self.s[int(off) :]
+        var n = copy(dest, unread_bytes)
         if n < len(dest):
             raise Error("EOF")
 
         return n
 
     # ReadByte implements the [io.ByteReader] Interface.
-    fn read_byte(inout self) raises -> UInt8:
+    fn read_byte(inout self) raises -> Byte:
         self.prev_rune = -1
         if self.index >= len(self.s):
             raise Error("EOF")
 
-        let byte = self.s[int(self.index)]
+        var byte = self.s[int(self.index)]
         self.index += 1
         return byte
 

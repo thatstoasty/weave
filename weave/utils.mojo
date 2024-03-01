@@ -40,6 +40,6 @@ fn _rstrip_index(input_string: String, chars: String) -> Int:
 
 
 fn strip(input_string: String, chars: String = _ALL_WHITESPACES) -> String:
-    let lstrip_index = _lstrip_index(input_string, chars)
-    let rstrip_index = _rstrip_index(input_string, chars)
+    var lstrip_index = _lstrip_index(input_string, chars)
+    var rstrip_index = _rstrip_index(input_string, chars)
     return input_string[lstrip_index:rstrip_index]

@@ -1,18 +1,17 @@
 from .gojo.bytes import buffer
-from .gojo.builtins._bytes import Bytes, to_bytes, to_string
-from .gojo.io import traits
+from .gojo.builtins._bytes import Bytes
+from .gojo.io import traits as io
 from .ansi import writer
 from .ansi.ansi import is_terminator, Marker, printable_rune_width
 from .utils import __string__mul__, strip
 
 
 @value
-struct Writer(traits.Writer):
+struct Writer(StringableRaising, io.Writer):
     var width: UInt8
     var tail: String
 
     var ansi_writer: writer.Writer
-    var buf: buffer.Buffer
     var ansi: Bool
 
     fn __init__(inout self, width: UInt8, tail: String, ansi: Bool = False) raises:
@@ -20,17 +19,14 @@ struct Writer(traits.Writer):
         self.tail = tail
         self.ansi = ansi
 
-        var buf = Bytes()
-        self.buf = buffer.Buffer(buf ^)
-
         # I think it's copying the buffer for now instead of using the actual buffer
-        self.ansi_writer = writer.Writer(self.buf)
+        self.ansi_writer = writer.new_default_writer()
 
     # write truncates content at the given printable cell width, leaving any
     # ansi sequences intact.
     fn write(inout self, src: Bytes) raises -> Int:
         # TODO: Normally rune length
-        let tw = printable_rune_width(self.tail)
+        var tw = printable_rune_width(self.tail)
         if self.width < UInt8(tw):
             return self.ansi_writer.forward.write_string(self.tail)
 
@@ -38,7 +34,7 @@ struct Writer(traits.Writer):
         var cur_width: UInt8 = 0
 
         for i in range(len(src)):
-            let c = chr(int(src[i]))
+            var c = chr(int(src[i]))
             if c == Marker:
                 # ANSI escape sequence
                 self.ansi = True
@@ -50,7 +46,7 @@ struct Writer(traits.Writer):
                 cur_width += UInt8(len(c))
 
             if cur_width > self.width:
-                let n = self.ansi_writer.forward.write_string(self.tail)
+                var n = self.ansi_writer.forward.write_string(self.tail)
                 if self.ansi_writer.last_sequence() != "":
                     self.ansi_writer.reset_ansi()
                 return n
@@ -64,8 +60,8 @@ struct Writer(traits.Writer):
         return self.ansi_writer.forward.bytes()
 
     # String returns the truncated result as a string.
-    fn string(self) raises -> String:
-        return self.ansi_writer.forward.string()
+    fn __str__(self) raises -> String:
+        return str(self.ansi_writer.forward)
 
 
 fn new_writer(width: UInt8, tail: String) raises -> Writer:
@@ -83,16 +79,15 @@ fn new_writer(width: UInt8, tail: String) raises -> Writer:
 
 # Bytes is shorthand for declaring a new default truncate-writer instance,
 # used to immediately truncate a byte slice.
-fn bytes(b: Bytes, width: UInt8) raises -> Bytes:
-    let tail = Bytes()
-    return bytes_with_tail(b, width, tail)
+fn apply_truncate_to_bytes(owned b: Bytes, width: UInt8) raises -> Bytes:
+    return apply_truncate_to_bytes_with_tail(b ^, width, "")
 
 
 # Bytes is shorthand for declaring a new default truncate-writer instance,
 # used to immediately truncate a byte slice. A tail is then added to the
 # end of the byte slice.
-fn bytes_with_tail(b: Bytes, width: UInt8, tail: Bytes) raises -> Bytes:
-    var f = new_writer(width, to_string(tail))
+fn apply_truncate_to_bytes_with_tail(owned b: Bytes, width: UInt8, tail: String) raises -> Bytes:
+    var f = new_writer(width, str(tail))
     _ = f.write(b)
 
     return f.bytes()
@@ -100,15 +95,14 @@ fn bytes_with_tail(b: Bytes, width: UInt8, tail: Bytes) raises -> Bytes:
 
 # String is shorthand for declaring a new default truncate-writer instance,
 # used to immediately truncate a string.
-fn string(s: String, width: UInt8) raises -> String:
-    return string_with_tail(s, width, "")
+fn apply_truncate(owned s: String, width: UInt8) raises -> String:
+    return apply_truncate_with_tail(s ^, width, "")
 
 
 # string_with_tail is shorthand for declaring a new default truncate-writer instance,
 # used to immediately truncate a string. A tail is then added to the end of the
 # string.
-fn string_with_tail(s: String, width: UInt8, tail: String) raises -> String:
-    var buf = to_bytes(s)
-    var tail_bytes = to_bytes(tail)
-    let b = bytes_with_tail(buf, width, tail_bytes)
-    return to_string(b)
+fn apply_truncate_with_tail(owned s: String, width: UInt8, tail: String) raises -> String:
+    var buf = Bytes(s)
+    var b = apply_truncate_to_bytes_with_tail(buf ^, width, tail)
+    return str(b)
