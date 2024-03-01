@@ -62,7 +62,7 @@ struct Buffer(
     WriterTo,
     ReaderFrom,
     StringableRaising,
-    Sized
+    Sized,
 ):
     var buf: Bytes  # contents are the bytes buf[off : len(buf)]
     var off: Int  # read at &buf[off], write at &buf[len(buf)]
@@ -493,7 +493,7 @@ struct Buffer(
 
     fn read_slice(inout self, delim: Byte) raises -> Bytes:
         """Like read_bytes but returns a reference to internal buffer data."""
-        var i = self.buf[self.off:].index_byte(delim)
+        var i = self.buf[self.off :].index_byte(delim)
         var end = self.off + i + 1
         if i < 0:
             end = len(self.buf)

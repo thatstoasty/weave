@@ -86,7 +86,9 @@ fn apply_truncate_to_bytes(owned b: Bytes, width: UInt8) raises -> Bytes:
 # Bytes is shorthand for declaring a new default truncate-writer instance,
 # used to immediately truncate a byte slice. A tail is then added to the
 # end of the byte slice.
-fn apply_truncate_to_bytes_with_tail(owned b: Bytes, width: UInt8, tail: String) raises -> Bytes:
+fn apply_truncate_to_bytes_with_tail(
+    owned b: Bytes, width: UInt8, tail: String
+) raises -> Bytes:
     var f = new_writer(width, str(tail))
     _ = f.write(b)
 
@@ -102,7 +104,9 @@ fn apply_truncate(owned s: String, width: UInt8) raises -> String:
 # string_with_tail is shorthand for declaring a new default truncate-writer instance,
 # used to immediately truncate a string. A tail is then added to the end of the
 # string.
-fn apply_truncate_with_tail(owned s: String, width: UInt8, tail: String) raises -> String:
+fn apply_truncate_with_tail(
+    owned s: String, width: UInt8, tail: String
+) raises -> String:
     var buf = Bytes(s)
     var b = apply_truncate_to_bytes_with_tail(buf ^, width, tail)
     return str(b)
