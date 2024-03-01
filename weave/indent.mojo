@@ -43,9 +43,7 @@ struct Writer(StringableRaising, io.Writer):
             else:
                 if not self.skip_indent:
                     self.ansi_writer.reset_ansi()
-                    var indent = Bytes(
-                        __string__mul__(String(" "), int(self.indent))
-                    )
+                    var indent = Bytes(__string__mul__(String(" "), int(self.indent)))
                     _ = self.ansi_writer.write(indent)
 
                     self.skip_indent = True
