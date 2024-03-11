@@ -1,5 +1,5 @@
 from weave import margin
-from testing import testing
+from .wrapper import MojoTest
 
 
 fn test_margin() raises:

@@ -1,10 +1,10 @@
 from weave import wordwrap
-from testing import testing
+from .wrapper import MojoTest
 
 
 fn test_wordwrap() raises:
-    print("Testing wordwrap")
-    testing.assert_equal(
+    var test = MojoTest("Testing wordwrap.apply_wordwrap")
+    test.assert_equal(
         wordwrap.apply_wordwrap("Hello Sekai!", 6),
         String("Hello\nSekai!")
     )
