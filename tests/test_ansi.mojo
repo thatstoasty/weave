@@ -1,6 +1,6 @@
-from testing import testing
+from tests.wrapper import MojoTest
 from weave import ansi
 
 
-fn test_ansi() raises:
+fn main() raises:
     pass

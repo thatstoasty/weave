@@ -1,5 +1,5 @@
 from weave import wordwrap
-from .wrapper import MojoTest
+from tests.wrapper import MojoTest
 
 
 fn test_wordwrap() raises:
@@ -8,3 +8,7 @@ fn test_wordwrap() raises:
         wordwrap.apply_wordwrap("Hello Sekai!", 6),
         String("Hello\nSekai!")
     )
+
+
+fn main() raises:
+    test_wordwrap()

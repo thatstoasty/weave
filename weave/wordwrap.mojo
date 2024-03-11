@@ -63,8 +63,7 @@ struct WordWrap(StringableRaising, io.Writer):
             self.word.reset()
 
     fn add_newline(inout self) raises:
-        """Write a newline to the word-wrap buffer and reset the line length & space buffer.
-        """
+        """Write a newline to the word-wrap buffer and reset the line length & space buffer."""
         _ = self.buf.write_byte(ord(self.newline))
         self.line_len = 0
         self.space.reset()
@@ -164,7 +163,6 @@ fn apply_wordwrap_to_bytes(owned b: Bytes, limit: Int) raises -> Bytes:
 # used to immediately wrap a string.
 fn apply_wordwrap(s: String, limit: Int) raises -> String:
     var buf = Bytes(s)
-    # buf = trim_null_characters(buf)
     var b = apply_wordwrap_to_bytes(buf ^, limit)
 
     return str(b)

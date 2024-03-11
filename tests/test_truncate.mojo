@@ -1,5 +1,5 @@
 from weave import truncate
-from .wrapper import MojoTest
+from tests.wrapper import MojoTest
 
 
 fn test_truncate() raises:
@@ -8,3 +8,7 @@ fn test_truncate() raises:
         truncate.apply_truncate("abcdefghikl\nasjdn", 5),
         String("abcde")
     )
+
+
+fn main() raises:
+    test_truncate()

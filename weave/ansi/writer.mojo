@@ -11,7 +11,7 @@ struct Writer(io.Writer):
     var ansi_seq: buffer.Buffer
     var last_seq: buffer.Buffer
     var seq_changed: Bool
-    var rune_buf: Bytes
+    # var rune_buf: Bytes
 
     fn __init__(inout self, owned forward: buffer.Buffer) raises:
         self.forward = forward
@@ -19,7 +19,7 @@ struct Writer(io.Writer):
         self.ansi_seq = buffer.new_buffer()
         self.last_seq = buffer.new_buffer()
         self.seq_changed = False
-        self.rune_buf = Bytes()
+        # self.rune_buf = Bytes(4096)
 
     # write is used to write content to the ANSI buffer.
     fn write(inout self, src: Bytes) raises -> Int:
@@ -72,7 +72,7 @@ struct Writer(io.Writer):
         if not self.seq_changed:
             return
         var ansi_code = Bytes(String("\x1b[0m"))
-        var b = Bytes()
+        var b = Bytes(512)
         for i in range(len(ansi_code)):
             b[i] = ansi_code[i]
         _ = self.forward.write(b)

@@ -229,9 +229,9 @@ struct Buffer(
         self.last_read = OP_INVALID
         var m: Int
         var ok: Bool
-        m, ok = self.try_grow_by_reslice(len(src))
+        m, ok = self.try_grow_by_reslice(src.size())
         if not ok:
-            m = self.grow(len(src))
+            m = self.grow(src.size())
         return copy(self.buf, src, m)
 
     fn write_string(inout self, src: String) raises -> Int:
@@ -323,7 +323,7 @@ struct Buffer(
         var n_bytes: Int = self.__len__()
         var n: Int64 = 0
         if n_bytes > 0:
-            var sl = self.buf[self.off :]
+            var sl = self.buf[self.off:self.buf.size()]
             var bytes_written = writer.write(sl)
             if bytes_written > n_bytes:
                 raise Error("buffer.Buffer.write_to: invalid write count")
@@ -409,7 +409,7 @@ struct Buffer(
         self.off += index
         if index > 0:
             self.last_read = OP_READ
-
+        
         return index
 
     fn next(inout self, inout number_of_bytes: Int) raises -> Bytes:

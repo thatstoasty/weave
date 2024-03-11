@@ -1,5 +1,5 @@
 from weave import padding
-from .wrapper import MojoTest
+from tests.wrapper import MojoTest
 
 
 fn test_padding() raises:
@@ -9,3 +9,6 @@ fn test_padding() raises:
         String("Hello               \nWorld               \nThis is my text!    ")
     )
 
+
+fn main() raises:
+    test_padding()
