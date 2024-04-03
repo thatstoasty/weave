@@ -1,5 +1,6 @@
 from external.gojo.bytes import buffer
-from external.gojo.builtins._bytes import Bytes
+from external.gojo.builtins import Result
+from external.gojo.builtins.bytes import Byte
 import external.gojo.io
 from .ansi import writer
 from .ansi.ansi import is_terminator, Marker, printable_rune_width
@@ -7,14 +8,14 @@ from .utils import __string__mul__, strip
 
 
 @value
-struct Writer(StringableRaising, io.Writer):
+struct Writer(Stringable, io.Writer):
     var width: UInt8
     var tail: String
 
     var ansi_writer: writer.Writer
     var ansi: Bool
 
-    fn __init__(inout self, width: UInt8, tail: String, ansi: Bool = False) raises:
+    fn __init__(inout self, width: UInt8, tail: String, ansi: Bool = False):
         self.width = width
         self.tail = tail
         self.ansi = ansi
@@ -24,7 +25,7 @@ struct Writer(StringableRaising, io.Writer):
 
     # write truncates content at the given printable cell width, leaving any
     # ansi sequences intact.
-    fn write(inout self, src: Bytes) raises -> Int:
+    fn write(inout self, src: List[Byte]) -> Result[Int]:
         # TODO: Normally rune length
         var tw = printable_rune_width(self.tail)
         if self.width < UInt8(tw):
@@ -55,16 +56,16 @@ struct Writer(StringableRaising, io.Writer):
 
         return len(src)
 
-    # Bytes returns the truncated result as a byte slice.
-    fn bytes(self) raises -> Bytes:
+    # List[Byte] returns the truncated result as a byte slice.
+    fn bytes(self) -> List[Byte]:
         return self.ansi_writer.forward.bytes()
 
     # String returns the truncated result as a string.
-    fn __str__(self) raises -> String:
+    fn __str__(self) -> String:
         return str(self.ansi_writer.forward)
 
 
-fn new_writer(width: UInt8, tail: String) raises -> Writer:
+fn new_writer(width: UInt8, tail: String) -> Writer:
     return Writer(width, tail)
 
 
@@ -77,18 +78,18 @@ fn new_writer(width: UInt8, tail: String) raises -> Writer:
 # 		,
 
 
-# Bytes is shorthand for declaring a new default truncate-writer instance,
+# List[Byte] is shorthand for declaring a new default truncate-writer instance,
 # used to immediately truncate a byte slice.
-fn apply_truncate_to_bytes(owned b: Bytes, width: UInt8) raises -> Bytes:
+fn apply_truncate_to_bytes(owned b: List[Byte], width: UInt8) -> List[Byte]:
     return apply_truncate_to_bytes_with_tail(b ^, width, "")
 
 
-# Bytes is shorthand for declaring a new default truncate-writer instance,
+# List[Byte] is shorthand for declaring a new default truncate-writer instance,
 # used to immediately truncate a byte slice. A tail is then added to the
 # end of the byte slice.
 fn apply_truncate_to_bytes_with_tail(
-    owned b: Bytes, width: UInt8, tail: String
-) raises -> Bytes:
+    owned b: List[Byte], width: UInt8, tail: String
+) -> List[Byte]:
     var f = new_writer(width, str(tail))
     _ = f.write(b)
 
@@ -97,7 +98,7 @@ fn apply_truncate_to_bytes_with_tail(
 
 # String is shorthand for declaring a new default truncate-writer instance,
 # used to immediately truncate a string.
-fn apply_truncate(owned s: String, width: UInt8) raises -> String:
+fn apply_truncate(owned s: String, width: UInt8) -> String:
     return apply_truncate_with_tail(s ^, width, "")
 
 
@@ -106,7 +107,8 @@ fn apply_truncate(owned s: String, width: UInt8) raises -> String:
 # string.
 fn apply_truncate_with_tail(
     owned s: String, width: UInt8, tail: String
-) raises -> String:
-    var buf = Bytes(s)
+) -> String:
+    var buf = s.as_bytes()
     var b = apply_truncate_to_bytes_with_tail(buf ^, width, tail)
-    return str(b)
+    b.append(0)
+    return String(b)
