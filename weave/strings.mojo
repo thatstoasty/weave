@@ -1,14 +1,14 @@
 alias _ALL_WHITESPACES = " \t\n\r\x0b\f"
 
 
-fn __string__mul__(input_string: String, n: Int) -> String:
+fn repeat(input_string: String, n: Int) -> String:
     var result: String = ""
     for _ in range(n):
         result += input_string
     return result
 
 
-fn __str_contains__(smaller_string: String, bigger_string: String) -> Bool:
+fn contains(smaller_string: String, bigger_string: String) -> Bool:
     if len(smaller_string) > len(bigger_string):
         return False
     for i in range(len(bigger_string) - len(smaller_string) + 1):
@@ -27,14 +27,14 @@ fn rstrip(input_string: String, chars: String = _ALL_WHITESPACES) -> String:
 
 fn _lstrip_index(input_string: String, chars: String) -> Int:
     for i in range(len(input_string)):
-        if not (__str_contains__(input_string[i], chars)):
+        if not (contains(input_string[i], chars)):
             return i
     return len(input_string)
 
 
 fn _rstrip_index(input_string: String, chars: String) -> Int:
     for i in range(len(input_string) - 1, -1, -1):
-        if not (__str_contains__(input_string[i], chars)):
+        if not (contains(input_string[i], chars)):
             return i + 1
     return 0
 
