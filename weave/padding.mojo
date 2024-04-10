@@ -41,7 +41,9 @@ struct Writer(Stringable, io.Writer):
         var bytes = len(src)
         var p = DTypePointer[DType.int8](src.data.value).bitcast[DType.uint8]()
         while bytes > 0:
-            var char_length = ((p.load() >> 7 == 0).cast[DType.uint8]() * 1 + ctlz(~p.load())).to_int()
+            var char_length = (
+                (p.load() >> 7 == 0).cast[DType.uint8]() * 1 + ctlz(~p.load())
+            ).to_int()
             var sp = DTypePointer[DType.int8].alloc(char_length + 1)
             memcpy(sp, p.bitcast[DType.int8](), char_length)
             sp[char_length] = 0
@@ -75,9 +77,7 @@ struct Writer(Stringable, io.Writer):
     fn pad(inout self):
         """Pads the current line with spaces to the given width."""
         if self.padding > 0 and UInt8(self.line_len) < self.padding:
-            var padding = repeat(
-                " ", int(self.padding) - self.line_len
-            )
+            var padding = repeat(" ", int(self.padding) - self.line_len)
             _ = self.ansi_writer.write(padding.as_bytes())
 
     fn close(inout self):
@@ -92,7 +92,8 @@ struct Writer(Stringable, io.Writer):
         return str(self.cache)
 
     fn flush(inout self):
-        """Finishes the padding operation. Always call it before trying to retrieve the final result."""
+        """Finishes the padding operation. Always call it before trying to retrieve the final result.
+        """
         if self.line_len != 0:
             self.pad()
 

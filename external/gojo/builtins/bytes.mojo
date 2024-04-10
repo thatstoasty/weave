@@ -30,26 +30,28 @@ fn has_suffix(bytes: List[Byte], suffix: List[Byte]) -> Bool:
         True if the List[Byte] struct ends with suffix; otherwise, False.
     """
     var len_comparison = len(bytes) >= len(suffix)
-    var suffix_comparison = equals(bytes[len(bytes) - len(suffix) : len(bytes)], suffix)
+    var suffix_comparison = equals(
+        bytes[len(bytes) - len(suffix) : len(bytes)], suffix
+    )
     return len_comparison and suffix_comparison
 
 
 fn index_byte(bytes: List[Byte], delim: Byte) -> Int:
-        """Return the index of the first occurrence of the byte delim.
+    """Return the index of the first occurrence of the byte delim.
 
-        Args:
-            bytes: The List[Byte] struct to search.
-            delim: The byte to search for.
+    Args:
+        bytes: The List[Byte] struct to search.
+        delim: The byte to search for.
 
-        Returns:
-            The index of the first occurrence of the byte delim.
-        """
-        var i = 0
-        for i in range(len(bytes)):
-            if bytes[i] == delim:
-                return i
+    Returns:
+        The index of the first occurrence of the byte delim.
+    """
+    var i = 0
+    for i in range(len(bytes)):
+        if bytes[i] == delim:
+            return i
 
-        return -1
+    return -1
 
 
 fn to_string(bytes: List[Byte]) -> String:
