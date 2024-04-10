@@ -83,18 +83,17 @@ struct WordWrap(Stringable, io.Writer):
 
         # TODO: need to fix this. Taking a copy of src and using that for the main logic doesn't work. I get all nulls, but using src directly works?
         # For now this just means keep_newlines does not work.
-        # var copy = List[Byte](existing=src)
-        # copy.append(0)
-        # var s = String(copy)
-        # if not self.keep_newlines:
-        #     s = strip(s)
-        #     s = s.replace("\n", " ")
-
-        # copy = s.as_bytes()
+        var copy = src
+        copy.append(0)
+        var s = String(copy)
+        if not self.keep_newlines:
+            s = strip(s)
+            s = s.replace("\n", " ")
 
         # Rune iterator
-        var bytes = len(src)
-        var p = DTypePointer[DType.int8](src.data.value).bitcast[DType.uint8]()
+        var bytes = len(s)
+        var s_bytes = s.as_bytes() # needs to be mutable, so we steal the data of the copy
+        var p = DTypePointer[DType.int8](s_bytes.steal_data().value).bitcast[DType.uint8]()
         while bytes > 0:
             var char_length = ((p.load() >> 7 == 0).cast[DType.uint8]() * 1 + ctlz(~p.load())).to_int()
             var sp = DTypePointer[DType.int8].alloc(char_length + 1)

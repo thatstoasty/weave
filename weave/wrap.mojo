@@ -60,23 +60,23 @@ struct Wrap(Stringable, io.Writer):
             The number of bytes written to the buffer and optional error.
         """
         var tab_space = repeat(" ", self.tab_width)
-        # TODO: Same issue as in wordwrap.
-        # var copy = src
-        # copy.append(0)
-        # var s = String(copy)
+        var copy = src
+        copy.append(0)
+        var s = String(copy)
 
-        # s = s.replace("\t", tab_space)
-        # if not self.keep_newlines:
-        #     s = s.replace("\n", "")
+        s = s.replace("\t", tab_space)
+        if not self.keep_newlines:
+            s = s.replace("\n", "")
 
-        var width = printable_rune_width(src)
+        var width = printable_rune_width(s)
         if self.limit <= 0 or self.line_len + width <= self.limit:
             self.line_len += width
             return self.buf.write(src)
 
         # Rune iterator
-        var bytes = len(src)
-        var p = DTypePointer[DType.int8](src.data.value).bitcast[DType.uint8]()
+        var bytes = len(s)
+        var s_bytes = s.as_bytes() # needs to be mutable, so we steal the data of the copy
+        var p = DTypePointer[DType.int8](s_bytes.steal_data().value).bitcast[DType.uint8]()
         while bytes > 0:
             var char_length = ((p.load() >> 7 == 0).cast[DType.uint8]() * 1 + ctlz(~p.load())).to_int()
             var sp = DTypePointer[DType.int8].alloc(char_length + 1)
