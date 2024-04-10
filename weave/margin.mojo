@@ -24,13 +24,12 @@ struct Writer(Stringable, io.Writer):
     fn bytes(self) -> List[Byte]:
         """Returns the result as a byte slice."""
         return self.buf.bytes()
-
+     
     fn __str__(self) -> String:
         return str(self.buf)
 
     fn write(inout self, src: List[Byte]) -> Result[Int]:
         """Writes the given byte slice to the writer.
-
         Args:
             src: The byte slice to write.
 
@@ -76,8 +75,6 @@ fn apply_margin_to_bytes(b: List[Byte], width: UInt8, margin: UInt8) -> List[Byt
     return f.bytes()
 
 
-# String is shorthand for declaring a new default margin-writer instance,
-# used to immediately apply margin a string.
 fn apply_margin(s: String, width: UInt8, margin: UInt8) -> String:
     """Shorthand for declaring a new default margin-writer instance,
     used to immediately apply a margin to a String.

@@ -117,7 +117,6 @@ fn apply_indent_to_bytes(b: List[Byte], indent: UInt8) -> List[Byte]:
     return f.bytes()
 
 
-
 fn apply_indent(s: String, indent: UInt8) -> String:
     """Shorthand for declaring a new default indent-writer instance,
     used to immediately indent a string.
