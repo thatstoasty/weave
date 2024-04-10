@@ -81,8 +81,6 @@ struct WordWrap(Stringable, io.Writer):
         if self.limit == 0:
             return self.buf.write(src)
 
-        # TODO: need to fix this. Taking a copy of src and using that for the main logic doesn't work. I get all nulls, but using src directly works?
-        # For now this just means keep_newlines does not work.
         var copy = src
         copy.append(0)
         var s = String(copy)
