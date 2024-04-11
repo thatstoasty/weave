@@ -4,15 +4,13 @@ A collection of (ANSI-sequence aware) text reflow operations &amp; algorithms. A
 
 Ported from/inspired by: <https://github.com/muesli/reflow/tree/master>
 
-> NOTE: This is not a 1:1 port or stable due to missing features in Mojo, and the fact that I'm learning how to work with buffers as I go.
-
 I've only tested this on MacOS VSCode terminal so far, so your mileage may vary!
 
 ## Wrap (Unconditional Wrapping)
 
 The `wrap` module lets you unconditionally wrap strings or entire blocks of text.
 
-```python
+```mojo
 from weave import indent
 from weave import wrap
 from weave import wordwrap
@@ -36,7 +34,7 @@ Sekai
 
 The `wordwrap` package lets you word-wrap strings or entire blocks of text.
 
-```python
+```mojo
 from weave import indent
 from weave import wrap
 from weave import wordwrap
@@ -57,7 +55,7 @@ Sekai!
 
 ### ANSI Example
 
-```go
+```mojo
 print(wordwrap.apply_wordwrap("I really \x1B[38;2;249;38;114mlove\x1B[0m Mojo!", 10))
 ```
 
@@ -67,7 +65,7 @@ print(wordwrap.apply_wordwrap("I really \x1B[38;2;249;38;114mlove\x1B[0m Mojo!",
 
 The `indent` module lets you indent strings or entire blocks of text.
 
-```python
+```mojo
 from weave import indent
 from weave import wrap
 from weave import wordwrap
@@ -92,7 +90,7 @@ Output
 The `dedent` module lets you dedent strings or entire blocks of text.
 It takes the minimum indentation of all lines and removes that amount of leading whitespace from each line.
 
-```python
+```mojo
 from weave import indent
 from weave import wrap
 from weave import wordwrap
@@ -115,7 +113,7 @@ Line 2!
 
 The `padding` module lets you right pad strings or entire blocks of text.
 
-```python
+```mojo
 from weave import indent
 from weave import wrap
 from weave import wordwrap
@@ -137,7 +135,7 @@ This is my text!
 
 ## Truncate
 
-```python
+```mojo
 from weave import indent
 from weave import wrap
 from weave import wordwrap
@@ -157,7 +155,7 @@ abcde
 
 ## Chaining outputs
 
-```python
+```mojo
 from weave import wrap
 from weave import padding
 
