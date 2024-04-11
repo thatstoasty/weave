@@ -2,7 +2,7 @@ from weave import dedent
 from tests.wrapper import MojoTest
 
 
-fn test_dedent() raises:
+fn test_dedent():
     var test = MojoTest("Testing dedent.apply_dedent")
     test.assert_equal(
         dedent.apply_dedent("    Line 1!\n  Line 2!"),
@@ -10,5 +10,14 @@ fn test_dedent() raises:
     )
 
 
-fn main() raises:
+fn test_unicode():
+    var test = MojoTest("Testing dedent.apply_dedent with unicode characters")
+    test.assert_equal(
+        dedent.apply_dedent("    Line 1🔥!\n  Line 2🔥!"),
+        String("  Line 1🔥!\nLine 2🔥!"),
+    )
+
+
+fn main():
     test_dedent()
+    test_unicode()

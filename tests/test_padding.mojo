@@ -12,5 +12,13 @@ fn test_padding() raises:
     )
 
 
+fn test_unicode():
+    var test = MojoTest("Testing padding.apply_padding with unicode characters")
+    test.assert_equal(
+        padding.apply_padding("Hello\nWorld\nThis is my text! 🔥", 20), String("Hello               \nWorld               \nThis is my text! 🔥  ")
+    )
+
+
 fn main() raises:
     test_padding()
+    test_unicode()

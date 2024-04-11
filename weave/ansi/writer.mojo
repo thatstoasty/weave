@@ -23,8 +23,15 @@ struct Writer(io.Writer):
         self.seq_changed = False
         # self.rune_buf = List[Byte](capacity=4096)
 
-    # write is used to write content to the ANSI buffer.
     fn write(inout self, src: List[Byte]) -> Result[Int]:
+        """Write content to the ANSI buffer.
+
+        Args:
+            src: The content to write.
+
+        Returns:
+            The number of bytes written and optional error.
+        """
         # Rune iterator
         var bytes = len(src)
         var p = DTypePointer[DType.int8](src.data.value).bitcast[DType.uint8]()
@@ -66,7 +73,6 @@ struct Writer(io.Writer):
             bytes -= char_length
             p += char_length
 
-        # TODO: Should this be returning just len(src)?
         return len(src)
 
     fn write_byte(inout self, byte: Byte) -> Int:

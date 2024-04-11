@@ -9,5 +9,13 @@ fn test_wrap() raises:
     )
 
 
+fn test_unicode():
+    var test = MojoTest("Testing wrap.apply_wrap with unicode characters")
+    test.assert_equal(
+        wrap.apply_wrap("Hello Sekai! 🔥", 5), String("Hello\nSekai\n! 🔥")
+    )
+
+
 fn main() raises:
     test_wrap()
+    test_unicode()
