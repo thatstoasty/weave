@@ -1,6 +1,6 @@
 from math.bit import ctlz
 from external.gojo.bytes import buffer
-from external.gojo.builtins import Result, Byte
+from external.gojo.builtins import Byte
 import external.gojo.io
 from .ansi import writer, is_terminator, Marker, printable_rune_width
 from .strings import repeat, strip
@@ -63,13 +63,12 @@ struct WordWrap(Stringable, io.Writer):
             self.word.reset()
 
     fn add_newline(inout self):
-        """Write a newline to the word-wrap buffer and reset the line length & space buffer.
-        """
+        """Write a newline to the word-wrap buffer and reset the line length & space buffer."""
         _ = self.buf.write_byte(ord(self.newline))
         self.line_len = 0
         self.space.reset()
 
-    fn write(inout self, src: List[Byte]) -> Result[Int]:
+    fn write(inout self, src: List[Byte]) -> (Int, Error):
         """Write more content to the word-wrap buffer.
 
         Args:
@@ -91,13 +90,9 @@ struct WordWrap(Stringable, io.Writer):
         # Rune iterator
         var bytes = len(s)
         var s_bytes = s.as_bytes()  # needs to be mutable, so we steal the data of the copy
-        var p = DTypePointer[DType.int8](s_bytes.steal_data().value).bitcast[
-            DType.uint8
-        ]()
+        var p = DTypePointer[DType.int8](s_bytes.steal_data()).bitcast[DType.uint8]()
         while bytes > 0:
-            var char_length = (
-                (p.load() >> 7 == 0).cast[DType.uint8]() * 1 + ctlz(~p.load())
-            ).to_int()
+            var char_length = int((p.load() >> 7 == 0).cast[DType.uint8]() * 1 + ctlz(~p.load()))
             var sp = DTypePointer[DType.int8].alloc(char_length + 1)
             memcpy(sp, p.bitcast[DType.int8](), char_length)
             sp[char_length] = 0
@@ -143,10 +138,7 @@ struct WordWrap(Stringable, io.Writer):
                 # add a line break if the current word would exceed the line's
                 # character limit
                 if (
-                    self.line_len
-                    + len(self.space)
-                    + printable_rune_width(str(self.word))
-                    > self.limit
+                    self.line_len + len(self.space) + printable_rune_width(str(self.word)) > self.limit
                     and printable_rune_width(str(self.word)) < self.limit
                 ):
                     self.add_newline()
@@ -155,11 +147,10 @@ struct WordWrap(Stringable, io.Writer):
             bytes -= char_length
             p += char_length
 
-        return len(src)
+        return len(src), Error()
 
     fn close(inout self):
-        """Finishes the word-wrap operation. Always call it before trying to retrieve the final result.
-        """
+        """Finishes the word-wrap operation. Always call it before trying to retrieve the final result."""
         self.add_word()
 
     fn bytes(self) -> List[Byte]:

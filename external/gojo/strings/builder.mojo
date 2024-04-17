@@ -2,17 +2,15 @@
 # Modified to use List[Int8] instead of List[String]
 
 import ..io
-from ..builtins import Byte, Result, WrappedError
+from ..builtins import Byte
 
 
 @value
-struct StringBuilder(
-    Stringable, Sized, io.Writer, io.ByteWriter, io.StringWriter
-):
+struct StringBuilder(Stringable, Sized, io.Writer, io.ByteWriter, io.StringWriter):
     """
     A string builder class that allows for efficient string management and concatenation.
     This class is useful when you need to build a string by appending multiple strings
-    together. It is around 10x faster than using the `+` operator to concatenate
+    together. It is around 20x faster than using the `+` operator to concatenate
     strings because it avoids the overhead of creating and destroying many
     intermediate strings and performs memcopy operations.
 
@@ -26,15 +24,15 @@ struct StringBuilder(
       from strings.builder import StringBuilder
 
       var sb = StringBuilder()
-      sb.append("mojo")
-      sb.append("jojo")
+      sb.write_string("mojo")
+      sb.write_string("jojo")
       print(sb) # mojojojo
       ```
     """
 
     var _vector: List[Byte]
 
-    fn __init__(inout self, size: Int = 4096):
+    fn __init__(inout self, *, size: Int = 4096):
         self._vector = List[Byte](capacity=size)
 
     fn __str__(self) -> String:
@@ -72,7 +70,7 @@ struct StringBuilder(
 
         return copy
 
-    fn write(inout self, src: List[Byte]) -> Result[Int]:
+    fn write(inout self, src: List[Byte]) -> (Int, Error):
         """
         Appends a byte array to the builder buffer.
 
@@ -80,9 +78,9 @@ struct StringBuilder(
           src: The byte array to append.
         """
         self._vector.extend(src)
-        return Result(len(src), None)
+        return len(src), Error()
 
-    fn write_byte(inout self, byte: Int8) -> Result[Int]:
+    fn write_byte(inout self, byte: Int8) -> (Int, Error):
         """
         Appends a byte array to the builder buffer.
 
@@ -90,9 +88,9 @@ struct StringBuilder(
             byte: The byte array to append.
         """
         self._vector.append(byte)
-        return Result(1, None)
+        return 1, Error()
 
-    fn write_string(inout self, src: String) -> Result[Int]:
+    fn write_string(inout self, src: String) -> (Int, Error):
         """
         Appends a string to the builder buffer.
 
@@ -101,7 +99,7 @@ struct StringBuilder(
         """
         var string_buffer = src.as_bytes()
         self._vector.extend(string_buffer)
-        return Result(len(string_buffer), None)
+        return len(string_buffer), Error()
 
     fn __len__(self) -> Int:
         """
