@@ -6,8 +6,6 @@ Ported from/inspired by: <https://github.com/muesli/reflow/tree/master>
 
 I've only tested this on MacOS VSCode terminal so far, so your mileage may vary!
 
-NOTE: This does not work on Mojo 24.2, you must use the nightly build for now. This will be resolved in the next Mojo release.
-
 ## Wrap (Unconditional Wrapping)
 
 The `wrap` module lets you unconditionally wrap strings or entire blocks of text.
