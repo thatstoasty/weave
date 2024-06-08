@@ -1,11 +1,11 @@
-from math.bit import ctlz
+from bit import countl_zero
 from external.gojo.builtins import Byte, Rune
 from external.gojo.unicode import rune_count_in_string
 
 alias Marker = "\x1B"
 
 
-fn is_terminator(c: Int8) -> Bool:
+fn is_terminator(c: UInt8) -> Bool:
     return (c >= 0x40 and c <= 0x5A) or (c >= 0x61 and c <= 0x7A)
 
 
@@ -20,11 +20,11 @@ fn printable_rune_width(s: String) -> Int:
 
     # Rune iterator for string
     var bytes = len(s)
-    var p = s._as_ptr().bitcast[DType.uint8]()
+    var p = DTypePointer[DType.uint8](s.unsafe_uint8_ptr())
     while bytes > 0:
-        var char_length = int((p.load() >> 7 == 0).cast[DType.uint8]() * 1 + ctlz(~p.load()))
-        var sp = DTypePointer[DType.int8].alloc(char_length + 1)
-        memcpy(sp, p.bitcast[DType.int8](), char_length)
+        var char_length = int((p.load() >> 7 == 0).cast[DType.uint8]() * 1 + countl_zero(~p.load()))
+        var sp = DTypePointer[DType.uint8].alloc(char_length + 1)
+        memcpy(sp, p, char_length)
         sp[char_length] = 0
 
         # Functional logic
@@ -56,11 +56,11 @@ fn printable_rune_width(s: List[Byte]) -> Int:
 
     # Rune iterator for string
     var bytes = len(s)
-    var p = DTypePointer[DType.int8](s.data).bitcast[DType.uint8]()
+    var p = DTypePointer[DType.uint8](s.unsafe_ptr())
     while bytes > 0:
-        var char_length = int((p.load() >> 7 == 0).cast[DType.uint8]() * 1 + ctlz(~p.load()))
-        var sp = DTypePointer[DType.int8].alloc(char_length + 1)
-        memcpy(sp, p.bitcast[DType.int8](), char_length)
+        var char_length = int((p.load() >> 7 == 0).cast[DType.uint8]() * 1 + countl_zero(~p.load()))
+        var sp = DTypePointer[DType.uint8].alloc(char_length + 1)
+        memcpy(sp, p, char_length)
         sp[char_length] = 0
 
         # Functional logic

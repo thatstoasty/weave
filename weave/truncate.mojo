@@ -1,4 +1,4 @@
-from math.bit import ctlz
+from bit import countl_zero
 from external.gojo.bytes import buffer
 from external.gojo.builtins import Byte
 import external.gojo.io
@@ -21,7 +21,7 @@ struct Writer(Stringable, io.Writer):
 
         self.ansi_writer = writer.new_default_writer()
 
-    fn write(inout self, src: List[Int8]) -> (Int, Error):
+    fn write(inout self, src: List[UInt8]) -> (Int, Error):
         """Truncates content at the given printable cell width, leaving any ANSI sequences intact.
 
         Args:
@@ -39,11 +39,11 @@ struct Writer(Stringable, io.Writer):
 
         # Rune iterator
         var bytes = len(src)
-        var p = DTypePointer[DType.int8](src.data).bitcast[DType.uint8]()
+        var p = DTypePointer[DType.uint8](src.data).bitcast[DType.uint8]()
         while bytes > 0:
-            var char_length = int((p.load() >> 7 == 0).cast[DType.uint8]() * 1 + ctlz(~p.load()))
-            var sp = DTypePointer[DType.int8].alloc(char_length + 1)
-            memcpy(sp, p.bitcast[DType.int8](), char_length)
+            var char_length = int((p.load() >> 7 == 0).cast[DType.uint8]() * 1 + countl_zero(~p.load()))
+            var sp = DTypePointer[DType.uint8].alloc(char_length + 1)
+            memcpy(sp, p, char_length)
             sp[char_length] = 0
 
             # Functional logic
@@ -62,7 +62,7 @@ struct Writer(Stringable, io.Writer):
                 var n = self.ansi_writer.forward.write_string(self.tail)
                 if self.ansi_writer.last_sequence() != "":
                     self.ansi_writer.reset_ansi()
-                return n
+                return n^
 
             _ = self.ansi_writer.write(char.as_bytes())
 

@@ -1,4 +1,4 @@
-from math.bit import ctlz
+from bit import countl_zero
 from external.gojo.bytes import buffer
 from external.gojo.builtins import Byte
 import external.gojo.io
@@ -89,17 +89,17 @@ struct WordWrap(Stringable, io.Writer):
 
         # Rune iterator
         var bytes = len(s)
-        var s_bytes = s.as_bytes()  # needs to be mutable, so we steal the data of the copy
-        var p = DTypePointer[DType.int8](s_bytes.steal_data()).bitcast[DType.uint8]()
+        var s_bytes = s.as_bytes()
+        var p = DTypePointer[DType.uint8](s_bytes.steal_data())
         while bytes > 0:
-            var char_length = int((p.load() >> 7 == 0).cast[DType.uint8]() * 1 + ctlz(~p.load()))
-            var sp = DTypePointer[DType.int8].alloc(char_length + 1)
-            memcpy(sp, p.bitcast[DType.int8](), char_length)
+            var char_length = int((p.load() >> 7 == 0).cast[DType.uint8]() * 1 + countl_zero(~p.load()))
+            var sp = DTypePointer[DType.uint8].alloc(char_length + 1)
+            memcpy(sp, p, char_length)
             sp[char_length] = 0
 
             # Functional logic
             var char = String(sp, char_length + 1)
-            if char == ord(Marker):
+            if char == Marker:
                 # ANSI escape sequence
                 _ = self.word.write(char.as_bytes())
                 self.ansi = True
