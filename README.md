@@ -6,6 +6,10 @@ Ported from/inspired by: <https://github.com/muesli/reflow/tree/master>
 
 I've only tested this on MacOS VSCode terminal so far, so your mileage may vary!
 
+TODO:
+
+- Handle different types of whitespace.
+
 ## Wrap (Unconditional Wrapping)
 
 The `wrap` module lets you unconditionally wrap strings or entire blocks of text.
@@ -19,7 +23,7 @@ from weave import padding
 from weave import truncate
 
 fn main() raises:
-    print(wrap.apply_wrap("Hello Sekai!", 5))
+    print(wrap("Hello Sekai!", 5))
 ```
 
 Output
@@ -43,7 +47,7 @@ from weave import padding
 from weave import truncate
 
 fn main() raises:
-    print(wordwrap.apply_wordwrap("Hello Sekai!", 6))
+    print(wordwrap("Hello Sekai!", 6))
 ```
 
 Output
@@ -56,7 +60,7 @@ Sekai!
 ### ANSI Example
 
 ```mojo
-print(wordwrap.apply_wordwrap("I really \x1B[38;2;249;38;114mlove\x1B[0m Mojo!", 10))
+print(wordwrap("I really \x1B[38;2;249;38;114mlove\x1B[0m Mojo!", 10))
 ```
 
 ![ANSI Example Output](https://github.com/thatstoasty/weave/blob/main/weave.png)
@@ -74,7 +78,7 @@ from weave import padding
 from weave import truncate
 
 fn main() raises:
-    print(indent.apply_indent("Hello\nWorld\n  TEST!", 5))
+    print(indent("Hello\nWorld\n  TEST!", 5))
 ```
 
 Output
@@ -99,7 +103,7 @@ from weave import padding
 from weave import truncate
 
 fn main() raises:
-    print(dedent.apply_dedent("    Line 1!\n  Line 2!"))
+    print(dedent("    Line 1!\n  Line 2!"))
 ```
 
 Output
@@ -122,7 +126,7 @@ from weave import padding
 from weave import truncate
 
 fn main() raises:
-    print(padding.apply_padding("Hello\nWorld\nThis is my text!", 15))
+    print(padding("Hello\nWorld\nThis is my text!", 15))
 ```
 
 Output
@@ -144,7 +148,7 @@ from weave import padding
 from weave import truncate
 
 fn main() raises:
-    print(truncate.apply_truncate("abcdefghikl\nasjdn", 5))
+    print(truncate("abcdefghikl\nasjdn", 5))
 ```
 
 Output
@@ -161,7 +165,7 @@ from weave import padding
 
 
 fn main() raises:
-    print(padding.apply_padding(wrap.apply_wrap("Hello Sekai!", 5), 5))
+    print(padding(wrap("Hello Sekai!", 5), 5))
 ```
 
 Output

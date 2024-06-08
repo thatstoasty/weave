@@ -3,19 +3,18 @@ from tests.wrapper import MojoTest
 
 
 fn test_padding() raises:
-    var test = MojoTest("Testing padding.apply_padding")
+    var test = MojoTest("Testing padding")
     test.assert_equal(
-        padding.apply_padding("Hello\nWorld\nThis is my text!", 20),
-        String(
-            "Hello               \nWorld               \nThis is my text!    "
-        ),
+        padding("Hello\nWorld\nThis is my text!", 20),
+        String("Hello               \nWorld               \nThis is my text!    "),
     )
 
 
 fn test_unicode():
-    var test = MojoTest("Testing padding.apply_padding with unicode characters")
+    var test = MojoTest("Testing padding with unicode characters")
     test.assert_equal(
-        padding.apply_padding("Hello\nWorld\nThis is my text! 🔥", 20), String("Hello               \nWorld               \nThis is my text! 🔥  ")
+        padding("Hello\nWorld\nThis is my text! 🔥", 20),
+        String("Hello               \nWorld               \nThis is my text! 🔥  "),
     )
 
 
