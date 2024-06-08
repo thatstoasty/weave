@@ -1,6 +1,5 @@
-from bit import countl_zero
 from external.gojo.bytes import buffer
-from external.gojo.builtins import Byte
+from external.gojo.unicode import UnicodeString
 import external.gojo.io
 from .ansi import writer, is_terminator, Marker, printable_rune_width
 from .strings import repeat, strip
@@ -37,17 +36,8 @@ struct Writer(Stringable, io.Writer):
         self.width -= UInt8(tw)
         var cur_width: UInt8 = 0
 
-        # Rune iterator
-        var bytes = len(src)
-        var p = DTypePointer[DType.uint8](src.data).bitcast[DType.uint8]()
-        while bytes > 0:
-            var char_length = int((p.load() >> 7 == 0).cast[DType.uint8]() * 1 + countl_zero(~p.load()))
-            var sp = DTypePointer[DType.uint8].alloc(char_length + 1)
-            memcpy(sp, p, char_length)
-            sp[char_length] = 0
-
-            # Functional logic
-            var char = String(sp, char_length + 1)
+        var uni_str = UnicodeString(src)
+        for char in uni_str:
             if char == Marker:
                 # ANSI escape sequence
                 self.ansi = True
@@ -66,12 +56,9 @@ struct Writer(Stringable, io.Writer):
 
             _ = self.ansi_writer.write(char.as_bytes())
 
-            bytes -= char_length
-            p += char_length
-
         return len(src), Error()
 
-    fn bytes(self) -> List[Byte]:
+    fn bytes(self) -> List[UInt8]:
         """Returns the truncated result as a byte slice.
 
         Returns:
@@ -96,16 +83,7 @@ fn new_writer(width: UInt8, tail: String) -> Writer:
     return Writer(width, tail)
 
 
-# fn NewWriterPipe(forward io.Writer, width: UInt8, tail string)-> Writer:
-# 	return &Writer
-# 		width: width,
-# 		tail:  tail,
-# 		ansi_writer: &ansi.Writer
-# 			Forward: forward,
-# 		,
-
-
-fn apply_truncate_to_bytes(b: List[Byte], width: UInt8) -> List[Byte]:
+fn apply_truncate_to_bytes(b: List[UInt8], width: UInt8) -> List[UInt8]:
     """Truncates a byte slice at the given printable cell width.
 
     Args:
@@ -118,7 +96,7 @@ fn apply_truncate_to_bytes(b: List[Byte], width: UInt8) -> List[Byte]:
     return apply_truncate_to_bytes_with_tail(b, width, "")
 
 
-fn apply_truncate_to_bytes_with_tail(b: List[Byte], width: UInt8, tail: String) -> List[Byte]:
+fn apply_truncate_to_bytes_with_tail(b: List[UInt8], width: UInt8, tail: String) -> List[UInt8]:
     """Shorthand for declaring a new default truncate-writer instance, used to immediately truncate a byte slice. A tail is then added to the end of the byte slice.
 
     Args:
@@ -135,7 +113,7 @@ fn apply_truncate_to_bytes_with_tail(b: List[Byte], width: UInt8, tail: String) 
     return f.bytes()
 
 
-fn apply_truncate(s: String, width: UInt8) -> String:
+fn truncate(s: String, width: UInt8) -> String:
     """Shorthand for declaring a new default truncate-writer instance, used to immediately truncate a String.
 
     Args:
@@ -145,10 +123,10 @@ fn apply_truncate(s: String, width: UInt8) -> String:
     Returns:
         The truncated string.
     """
-    return apply_truncate_with_tail(s, width, "")
+    return truncate_with_tail(s, width, "")
 
 
-fn apply_truncate_with_tail(s: String, width: UInt8, tail: String) -> String:
+fn truncate_with_tail(s: String, width: UInt8, tail: String) -> String:
     """Shorthand for declaring a new default truncate-writer instance, used to immediately truncate a String.
     A tail is then added to the end of the string.
 
