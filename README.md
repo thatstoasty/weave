@@ -15,14 +15,9 @@ TODO:
 The `wrap` module lets you unconditionally wrap strings or entire blocks of text.
 
 ```mojo
-from weave import indent
 from weave import wrap
-from weave import wordwrap
-from weave import dedent
-from weave import padding
-from weave import truncate
 
-fn main() raises:
+fn main():
     print(wrap("Hello Sekai!", 5))
 ```
 
@@ -39,14 +34,9 @@ Sekai
 The `wordwrap` package lets you word-wrap strings or entire blocks of text.
 
 ```mojo
-from weave import indent
-from weave import wrap
 from weave import wordwrap
-from weave import dedent
-from weave import padding
-from weave import truncate
 
-fn main() raises:
+fn main():
     print(wordwrap("Hello Sekai!", 6))
 ```
 
@@ -71,13 +61,8 @@ The `indent` module lets you indent strings or entire blocks of text.
 
 ```mojo
 from weave import indent
-from weave import wrap
-from weave import wordwrap
-from weave import dedent
-from weave import padding
-from weave import truncate
 
-fn main() raises:
+fn main():
     print(indent("Hello\nWorld\n  TEST!", 5))
 ```
 
@@ -95,14 +80,9 @@ The `dedent` module lets you dedent strings or entire blocks of text.
 It takes the minimum indentation of all lines and removes that amount of leading whitespace from each line.
 
 ```mojo
-from weave import indent
-from weave import wrap
-from weave import wordwrap
 from weave import dedent
-from weave import padding
-from weave import truncate
 
-fn main() raises:
+fn main():
     print(dedent("    Line 1!\n  Line 2!"))
 ```
 
@@ -118,14 +98,9 @@ Line 2!
 The `padding` module lets you right pad strings or entire blocks of text.
 
 ```mojo
-from weave import indent
-from weave import wrap
-from weave import wordwrap
-from weave import dedent
 from weave import padding
-from weave import truncate
 
-fn main() raises:
+fn main():
     print(padding("Hello\nWorld\nThis is my text!", 15))
 ```
 
@@ -140,14 +115,9 @@ This is my text!
 ## Truncate
 
 ```mojo
-from weave import indent
-from weave import wrap
-from weave import wordwrap
-from weave import dedent
-from weave import padding
 from weave import truncate
 
-fn main() raises:
+fn main():
     print(truncate("abcdefghikl\nasjdn", 5))
 ```
 
@@ -164,7 +134,7 @@ from weave import wrap
 from weave import padding
 
 
-fn main() raises:
+fn main():
     print(padding(wrap("Hello Sekai!", 5), 5))
 ```
 
