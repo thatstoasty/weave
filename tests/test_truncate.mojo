@@ -9,7 +9,7 @@ fn test_truncate() raises:
 
 fn test_unicode():
     var test = MojoTest("Testing truncate with unicode characters")
-    test.assert_equal(truncate("abcdefghikl🔥\nasjdn🔥", 12), String("abcdefghikl🔥"))
+    test.assert_equal(truncate("abcdefghikl🔥a\nsjdn🔥", 13), String("abcdefghikl🔥"))
 
 
 fn main() raises:

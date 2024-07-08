@@ -1,5 +1,5 @@
 from tests.wrapper import MojoTest
-from weave.ansi import printable_rune_width, is_terminator, Writer, new_default_writer
+from weave.ansi import printable_rune_width, is_terminator, Writer
 
 
 fn test_is_terminator():
@@ -10,8 +10,8 @@ fn test_is_terminator():
 
 fn test_printable_rune_length():
     var test = MojoTest("Testing ansi.printable_rune_width")
-    test.assert_equal(printable_rune_width("🔥"), 1)
-    test.assert_equal(printable_rune_width("こんにちは, 世界!"), 10)
+    test.assert_equal(printable_rune_width("🔥"), 2)
+    test.assert_equal(printable_rune_width("こんにちは, 世界!"), 17)
 
 
 # fn test_writer():
