@@ -1,7 +1,7 @@
 #!/bin/bash
 mkdir -p tmp
 
-echo -e "Building mist package and copying tests."
+echo -e "Building weave package and copying tests."
 ./scripts/build.sh package
 mv weave.mojopkg tmp/
 cp -R tests/ tmp/tests/
