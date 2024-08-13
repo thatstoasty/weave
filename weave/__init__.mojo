@@ -8,6 +8,7 @@ from ._wordwrap import wordwrap
 
 
 alias SPACE = String(" ")
+alias NEWLINE = String("\n")
 alias TAB_BYTE = ord("\t")
 alias SPACE_BYTE = ord(" ")
 alias NEWLINE_BYTE = ord("\n")

@@ -1,4 +1,5 @@
-from external.gojo.bytes import buffer
+from utils import Span
+from gojo.bytes import Buffer
 
 
 fn dedent(text: String) -> String:
@@ -70,9 +71,9 @@ fn apply_dedent(bytes: Span[UInt8], indent: Int) -> String:
     Returns:
         A new dedented string.
     """
-    var omitted: Int = 0
-    var buf = buffer.new_buffer()
-    var i: Int = 0
+    var omitted = 0
+    var buf = Buffer()
+    var i = 0
 
     while i < len(bytes):
         if bytes[i] == TAB_BYTE or bytes[i] == SPACE_BYTE:

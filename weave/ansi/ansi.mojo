@@ -1,4 +1,4 @@
-from external.gojo.unicode import UnicodeString, rune_width
+from gojo.unicode import string_width
 
 
 alias Marker = "\x1B"
@@ -17,19 +17,18 @@ fn printable_rune_width(text: String) -> Int:
     Returns:
         The printable cell width of the string.
     """
-    var length: Int = 0
-    var ansi: Bool = False
+    var length = 0
+    var ansi = False
 
-    for rune in UnicodeString(text):
-        var char = ord(rune)
-        if char == ord(Marker):
+    for rune in text:
+        if rune == Marker:
             # ANSI escape sequence
             ansi = True
         elif ansi:
-            if is_terminator(char):
+            if is_terminator(ord(String(rune))):
                 # ANSI sequence terminated
                 ansi = False
         else:
-            length += rune_width(char)
+            length += string_width(rune)
 
     return length

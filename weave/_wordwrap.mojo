@@ -1,5 +1,5 @@
-from external.gojo.bytes import buffer
-from external.gojo.unicode import UnicodeString
+from utils import Span, StringSlice
+from gojo.bytes import buffer
 import .ansi
 
 
@@ -17,7 +17,7 @@ struct Writer(Stringable, Movable):
 
     fn main():
         var writer = wordwrap.Writer(5)
-        _ = writer.write("Hello, World!".as_bytes_slice())
+        _ = writer.write("Hello, World!")
         _ = writer.close()
         print(String(writer.as_string_slice()))
     ```
@@ -90,13 +90,13 @@ struct Writer(Stringable, Movable):
         """Returns the word wrapped result as a byte list."""
         return self.buf.bytes()
 
-    fn as_bytes_slice(self: Reference[Self]) -> Span[UInt8, self.is_mutable, self.lifetime]:
+    fn as_bytes_slice(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
         """Returns the word wrapped result as a byte slice."""
-        return self[].buf.as_bytes_slice()
+        return self.buf.as_bytes_slice()
 
-    fn as_string_slice(self: Reference[Self]) -> StringSlice[self.is_mutable, self.lifetime]:
+    fn as_string_slice(ref [_]self) -> StringSlice[__lifetime_of(self)]:
         """Returns the word wrapped result as a string slice."""
-        return StringSlice(unsafe_from_utf8=self[].buf.as_bytes_slice())
+        return StringSlice(unsafe_from_utf8=self.buf.as_bytes_slice())
 
     fn add_space(inout self):
         """Write the content of the space buffer to the word-wrap buffer."""
@@ -118,7 +118,7 @@ struct Writer(Stringable, Movable):
         self.line_len = 0
         self.space.reset()
 
-    fn write(inout self, src: Span[UInt8]) -> (Int, Error):
+    fn write(inout self, src: String) -> (Int, Error):
         """Write more content to the word-wrap buffer.
 
         Args:
@@ -128,27 +128,24 @@ struct Writer(Stringable, Movable):
             The number of bytes written. and optional error.
         """
         if self.limit == 0:
-            return self.buf._write(src)
+            return self.buf.write(src.as_bytes_slice())
 
-        var buf = List[UInt8](src)
-        buf.append(0)
-        var s = String(buf^)
+        var s = src
         if not self.keep_newlines:
             s = s.strip()
             s = s.replace("\n", " ")
 
-        for rune in UnicodeString(s):
-            var char = String(rune)
-            if char == ansi.Marker:
+        for rune in s:
+            if rune == ansi.Marker:
                 # ANSI escape sequence
-                _ = self.word._write(char.as_bytes_slice())
+                _ = self.word.write(rune.as_bytes_slice())
                 self.ansi = True
             elif self.ansi:
-                _ = self.word._write(char.as_bytes_slice())
-                if ansi.is_terminator(ord(char)):
+                _ = self.word.write(rune.as_bytes_slice())
+                if ansi.is_terminator(ord(rune)):
                     # ANSI sequence terminated
                     self.ansi = False
-            elif char == self.newline:
+            elif rune == self.newline:
                 # end of current line
                 # see if we can add the content of the space buffer to the current line
                 if len(self.word) == 0:
@@ -156,24 +153,24 @@ struct Writer(Stringable, Movable):
                         self.line_len = 0
                     else:
                         # preserve whitespace
-                        _ = self.buf._write(self.space.as_bytes_slice())
+                        _ = self.buf.write(self.space.as_bytes_slice())
 
                     self.space.reset()
 
                 self.add_word()
                 self.add_newline()
-            elif char == " ":
+            elif rune == SPACE:
                 # end of current word
                 self.add_word()
-                _ = self.space._write(char.as_bytes_slice())
-            elif char == self.breakpoint:
+                _ = self.space.write(rune.as_bytes_slice())
+            elif rune == self.breakpoint:
                 # valid breakpoint
                 self.add_space()
                 self.add_word()
-                _ = self.buf._write(char.as_bytes_slice())
+                _ = self.buf.write(rune.as_bytes_slice())
             else:
                 # any other character
-                _ = self.word._write(char.as_bytes_slice())
+                _ = self.word.write(rune.as_bytes_slice())
 
                 # add a line break if the current word would exceed the line's
                 # character limit
@@ -188,23 +185,6 @@ struct Writer(Stringable, Movable):
     fn close(inout self):
         """Finishes the word-wrap operation. Always call it before trying to retrieve the final result."""
         self.add_word()
-
-
-fn apply_wordwrap_to_bytes(span: Span[UInt8], limit: Int) -> List[UInt8]:
-    """Shorthand for declaring a new default WordWrap instance,
-    used to immediately word-wrap a byte slice.
-
-    Args:
-        span: The byte slice to word-wrap.
-        limit: The maximum number of characters per line.
-
-    Returns:
-        A new word-wrapped byte slice.
-    """
-    var writer = Writer(limit)
-    _ = writer.write(span)
-    _ = writer.close()
-    return writer.as_bytes()
 
 
 fn wordwrap(text: String, limit: Int) -> String:
@@ -228,6 +208,6 @@ fn wordwrap(text: String, limit: Int) -> String:
     .
     """
     var writer = Writer(limit)
-    _ = writer.write(text.as_bytes_slice())
+    _ = writer.write(text)
     _ = writer.close()
     return String(writer.as_string_slice())

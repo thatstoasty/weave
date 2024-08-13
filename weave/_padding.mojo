@@ -1,5 +1,6 @@
-from external.gojo.bytes import buffer
-from external.gojo.unicode import UnicodeString, string_width
+from utils import Span, StringSlice
+from gojo.bytes import buffer
+from gojo.unicode import string_width
 import .ansi
 
 
@@ -12,7 +13,7 @@ struct Writer(Stringable, Movable):
 
     fn main():
         var writer = padding.Writer(4)
-        _ = writer.write("Hello, World!".as_bytes_slice())
+        _ = writer.write("Hello, World!")
         writer.flush()
         print(String(writer.as_string_slice()))
     ```
@@ -45,7 +46,7 @@ struct Writer(Stringable, Movable):
         self.padding = padding
         self.line_len = line_len
         self.in_ansi = in_ansi
-        self.cache = buffer.new_buffer()
+        self.cache = buffer.Buffer()
         self.ansi_writer = ansi.Writer()
 
     fn __moveinit__(inout self, owned other: Self):
@@ -62,15 +63,15 @@ struct Writer(Stringable, Movable):
         """Returns the padded result as a byte list."""
         return self.cache.bytes()
 
-    fn as_bytes_slice(self: Reference[Self]) -> Span[UInt8, self.is_mutable, self.lifetime]:
+    fn as_bytes_slice(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
         """Returns the padded result as a byte slice."""
-        return self[].cache.as_bytes_slice()
+        return self.cache.as_bytes_slice()
 
-    fn as_string_slice(self: Reference[Self]) -> StringSlice[self.is_mutable, self.lifetime]:
+    fn as_string_slice(ref [_]self) -> StringSlice[__lifetime_of(self)]:
         """Returns the padded result as a string slice."""
-        return StringSlice(unsafe_from_utf8=self[].cache.as_bytes_slice())
+        return StringSlice(unsafe_from_utf8=self.cache.as_bytes_slice())
 
-    fn write(inout self, src: Span[UInt8]) -> (Int, Error):
+    fn write(inout self, src: String) -> (Int, Error):
         """Pads content to the given printable cell width.
 
         Args:
@@ -80,25 +81,23 @@ struct Writer(Stringable, Movable):
             The number of bytes written and optional error.
         """
         var err = Error()
-        for rune in UnicodeString(src):
-            var char = String(rune)
-            if char == ansi.Marker:
+        for rune in src:
+            if rune == ansi.Marker:
                 self.in_ansi = True
             elif self.in_ansi:
-                if ansi.is_terminator(ord(char)):
+                if ansi.is_terminator(ord(rune)):
                     self.in_ansi = False
             else:
-                if char == "\n":
+                if rune == NEWLINE:
                     # end of current line, if pad right then add padding before newline
                     self.pad()
                     self.ansi_writer.reset_ansi()
                     self.line_len = 0
                 else:
-                    self.line_len += string_width(char)
+                    self.line_len += string_width(rune)
 
             var bytes_written = 0
-
-            bytes_written, err = self.ansi_writer.write(char.as_bytes_slice())
+            bytes_written, err = self.ansi_writer.write(rune)
             if err:
                 return bytes_written, err
 
@@ -108,7 +107,7 @@ struct Writer(Stringable, Movable):
         """Pads the current line with spaces to the given width."""
         if self.padding > 0 and UInt8(self.line_len) < self.padding:
             var padding = SPACE * (int(self.padding) - self.line_len)
-            _ = self.ansi_writer.write(padding.as_bytes_slice())
+            _ = self.ansi_writer.write(padding)
 
     fn close(inout self):
         """Finishes the padding operation."""
@@ -123,22 +122,6 @@ struct Writer(Stringable, Movable):
         _ = self.ansi_writer.forward.write_to(self.cache)
         self.line_len = 0
         self.in_ansi = False
-
-
-fn apply_padding_to_bytes(bytes: Span[UInt8], width: UInt8) -> List[UInt8]:
-    """Pads a byte slice to the given printable cell width.
-
-    Args:
-        bytes: The byte slice to pad.
-        width: The padding width.
-
-    Returns:
-        A new padded list of bytes.
-    """
-    var writer = Writer(width)
-    _ = writer.write(bytes)
-    _ = writer.flush()
-    return writer.as_bytes()
 
 
 fn padding(text: String, width: UInt8) -> String:
@@ -162,6 +145,6 @@ fn padding(text: String, width: UInt8) -> String:
     .
     """
     var writer = Writer(width)
-    _ = writer.write(text.as_bytes_slice())
+    _ = writer.write(text)
     _ = writer.flush()
     return String(writer.as_string_slice())

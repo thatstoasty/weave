@@ -1,5 +1,6 @@
-from external.gojo.bytes import buffer
-from external.gojo.unicode import UnicodeString, rune_width
+from utils import Span, StringSlice
+from gojo.bytes import buffer
+from gojo.unicode import rune_width
 import .ansi
 
 alias DEFAULT_NEWLINE = "\n"
@@ -15,7 +16,7 @@ struct Writer(Stringable, Movable):
 
     fn main():
         var writer = wrap.Writer(5)
-        _ = writer.write("Hello, World!".as_bytes_slice())
+        _ = writer.write("Hello, World!")
         print(String(writer.as_string_slice()))
     ```
     """
@@ -90,20 +91,20 @@ struct Writer(Stringable, Movable):
         """Returns the wrapped result as a byte list."""
         return self.buf.bytes()
 
-    fn as_bytes_slice(self: Reference[Self]) -> Span[UInt8, self.is_mutable, self.lifetime]:
+    fn as_bytes_slice(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
         """Returns the  wrapped result as a byte slice."""
-        return self[].buf.as_bytes_slice()
+        return self.buf.as_bytes_slice()
 
-    fn as_string_slice(self: Reference[Self]) -> StringSlice[self.is_mutable, self.lifetime]:
+    fn as_string_slice(ref [_]self) -> StringSlice[__lifetime_of(self)]:
         """Returns the wrapped result as a string slice."""
-        return StringSlice(unsafe_from_utf8=self[].buf.as_bytes_slice())
+        return StringSlice(unsafe_from_utf8=self.buf.as_bytes_slice())
 
     fn add_newline(inout self):
         """Adds a newline to the buffer and resets the line length."""
         _ = self.buf.write_byte(ord(self.newline))
         self.line_len = 0
 
-    fn write(inout self, src: Span[UInt8]) -> (Int, Error):
+    fn write(inout self, owned src: String) -> (Int, Error):
         """Writes the given byte slice to the buffer, wrapping lines as needed.
 
         Args:
@@ -113,60 +114,42 @@ struct Writer(Stringable, Movable):
             The number of bytes written to the buffer and optional error.
         """
         var tab_space = SPACE * self.tab_width
-        var s = String(src)
-        s = s.replace("\t", tab_space)
+        src = src.replace("\t", tab_space)
         if not self.keep_newlines:
-            s = s.replace("\n", "")
+            src = src.replace("\n", "")
 
-        var width = ansi.printable_rune_width(s)
+        var width = ansi.printable_rune_width(src)
         if self.limit <= 0 or self.line_len + width <= self.limit:
             self.line_len += width
-            return self.buf._write(src)
+            return self.buf.write(src.as_bytes_slice())
 
-        for rune in UnicodeString(src):
-            var char = String(rune)
-            if char == ansi.Marker:
+        for rune in src:
+            if rune == ansi.Marker:
                 self.ansi = True
             elif self.ansi:
-                if ansi.is_terminator(ord(char)):
+                if ansi.is_terminator(ord(rune)):
                     self.ansi = False
-            elif char == "\n":
+            elif rune == NEWLINE:
                 self.add_newline()
                 self.forceful_newline = False
                 continue
             else:
-                var width = rune_width(ord(char))
+                var width = rune_width(ord(rune))
 
                 if self.line_len + width > self.limit:
                     self.add_newline()
                     self.forceful_newline = True
 
                 if self.line_len == 0:
-                    if self.forceful_newline and not self.preserve_space and char == " ":
+                    if self.forceful_newline and not self.preserve_space and rune == SPACE:
                         continue
                 else:
                     self.forceful_newline = False
 
                 self.line_len += width
-            _ = self.buf._write(char.as_bytes_slice())
+            _ = self.buf.write(rune.as_bytes_slice())
 
         return len(src), Error()
-
-
-fn apply_wrap_to_bytes(span: Span[UInt8], limit: Int) -> List[UInt8]:
-    """Shorthand for declaring a new default Wrap instance,
-    used to immediately wrap a byte slice.
-
-    Args:
-        span: The byte slice to wrap.
-        limit: The maximum line length before wrapping.
-
-    Returns:
-        A new wrapped byte slice.
-    """
-    var writer = Writer(limit)
-    _ = writer.write(span)
-    return writer.as_bytes()
 
 
 fn wrap(text: String, limit: Int) -> String:
@@ -190,5 +173,5 @@ fn wrap(text: String, limit: Int) -> String:
     .
     """
     var writer = Writer(limit)
-    _ = writer.write(text.as_bytes_slice())
+    _ = writer.write(text)
     return String(writer.as_string_slice())

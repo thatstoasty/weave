@@ -1,4 +1,5 @@
-from external.gojo.bytes import buffer
+from utils import Span, StringSlice
+from gojo.bytes import buffer
 import . _padding as padding
 import . _indent as indent
 
@@ -12,7 +13,7 @@ struct Writer(Stringable, Movable):
 
     fn main():
         var writer = margin.Writer(5, 2)
-        _ = writer.write("Hello, World!".as_bytes_slice())
+        _ = writer.write("Hello, World!")
         _ = writer.close()
         print(String(writer.as_string_slice()))
     ```
@@ -30,7 +31,7 @@ struct Writer(Stringable, Movable):
             pw: The padding-writer instance.
             iw: The indent-writer instance.
         """
-        self.buf = buffer.new_buffer()
+        self.buf = buffer.Buffer()
         self.pw = pw^
         self.iw = iw^
 
@@ -41,7 +42,7 @@ struct Writer(Stringable, Movable):
             pad: Width of the padding of the padding-writer instance.
             indentation: Width of the indentation of the padding-writer instance.
         """
-        self.buf = buffer.new_buffer()
+        self.buf = buffer.Buffer()
         self.pw = padding.Writer(pad)
         self.iw = indent.Writer(indentation)
 
@@ -57,15 +58,15 @@ struct Writer(Stringable, Movable):
         """Returns the wrapped result as a byte list."""
         return self.buf.bytes()
 
-    fn as_bytes_slice(self: Reference[Self]) -> Span[UInt8, self.is_mutable, self.lifetime]:
+    fn as_bytes_slice(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
         """Returns the  wrapped result as a byte slice."""
-        return self[].buf.as_bytes_slice()
+        return self.buf.as_bytes_slice()
 
-    fn as_string_slice(self: Reference[Self]) -> StringSlice[self.is_mutable, self.lifetime]:
+    fn as_string_slice(ref [_]self) -> StringSlice[__lifetime_of(self)]:
         """Returns the wrapped result as a string slice."""
-        return StringSlice(unsafe_from_utf8=self[].buf.as_bytes_slice())
+        return StringSlice(unsafe_from_utf8=self.buf.as_bytes_slice())
 
-    fn write(inout self, src: Span[UInt8]) -> (Int, Error):
+    fn write(inout self, src: String) -> (Int, Error):
         """Writes the given byte slice to the writer.
 
         Args:
@@ -80,30 +81,12 @@ struct Writer(Stringable, Movable):
         if err:
             return bytes_written, err
 
-        return self.pw.write(self.iw.as_bytes_slice())
+        return self.pw.write(str(self.iw))
 
     fn close(inout self):
         """Will finish the margin operation. Always call it before trying to retrieve the final result."""
         _ = self.pw.close()
         _ = self.buf.write(self.pw.as_bytes_slice())
-
-
-fn apply_margin_to_bytes(span: Span[UInt8], width: UInt8, margin: UInt8) -> List[UInt8]:
-    """Shorthand for declaring a new default margin-writer instance,
-    used to immediately apply a margin to a byte slice.
-
-    Args:
-        span: The byte slice to apply the margin to.
-        width: The width of the margin.
-        margin: The margin to apply.
-
-    Returns:
-        A new margin applied list of bytes.
-    """
-    var writer = Writer(width, margin)
-    _ = writer.write(span)
-    _ = writer.close()
-    return writer.as_bytes()
 
 
 fn margin(text: String, width: UInt8, margin: UInt8) -> String:
@@ -119,6 +102,6 @@ fn margin(text: String, width: UInt8, margin: UInt8) -> String:
         A new margin applied string.
     """
     var writer = Writer(width, margin)
-    _ = writer.write(text.as_bytes_slice())
+    _ = writer.write(text)
     _ = writer.close()
     return String(writer.as_string_slice())

@@ -1,5 +1,6 @@
-from external.gojo.bytes import buffer
-from external.gojo.unicode import UnicodeString, rune_width
+from utils import Span, StringSlice
+from gojo.bytes import buffer
+from gojo.unicode import rune_width
 import .ansi
 
 
@@ -12,7 +13,7 @@ struct Writer(Stringable, Movable):
 
     fn main():
         var writer = truncate.Writer(4, tail=".")
-        _ = writer.write("Hello, World!".as_bytes_slice())
+        _ = writer.write("Hello, World!")
         print(String(writer.as_string_slice()))
     ```
     .
@@ -53,15 +54,15 @@ struct Writer(Stringable, Movable):
         """Returns the truncated result as a byte list."""
         return self.ansi_writer.forward.bytes()
 
-    fn as_bytes_slice(self: Reference[Self]) -> Span[UInt8, self.is_mutable, self.lifetime]:
+    fn as_bytes_slice(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
         """Returns the truncated result as a byte slice."""
-        return self[].ansi_writer.forward.as_bytes_slice()
+        return self.ansi_writer.forward.as_bytes_slice()
 
-    fn as_string_slice(self: Reference[Self]) -> StringSlice[self.is_mutable, self.lifetime]:
+    fn as_string_slice(ref [_]self) -> StringSlice[__lifetime_of(self)]:
         """Returns the truncated result as a string slice."""
-        return StringSlice(unsafe_from_utf8=self[].ansi_writer.forward.as_bytes_slice())
+        return StringSlice(unsafe_from_utf8=self.ansi_writer.forward.as_bytes_slice())
 
-    fn write(inout self, src: Span[UInt8]) -> (Int, Error):
+    fn write(inout self, src: String) -> (Int, Error):
         """Truncates content at the given printable cell width, leaving any ANSI sequences intact.
 
         Args:
@@ -72,22 +73,21 @@ struct Writer(Stringable, Movable):
         """
         var tw = ansi.printable_rune_width(self.tail)
         if self.width < UInt8(tw):
-            return self.ansi_writer.forward._write(self.tail.as_bytes_slice())
+            return self.ansi_writer.forward.write(self.tail.as_bytes_slice())
 
         self.width -= UInt8(tw)
         var cur_width: UInt8 = 0
 
-        for rune in UnicodeString(src):
-            var char = String(rune)
-            if char == ansi.Marker:
+        for rune in src:
+            if rune == ansi.Marker:
                 # ANSI escape sequence
                 self.in_ansi = True
             elif self.in_ansi:
-                if ansi.is_terminator(ord(char)):
+                if ansi.is_terminator(ord(rune)):
                     # ANSI sequence terminated
                     self.in_ansi = False
             else:
-                cur_width += UInt8(rune_width(ord(char)))
+                cur_width += UInt8(rune_width(ord(rune)))
 
             if cur_width > self.width:
                 var n = self.ansi_writer.forward.write_string(self.tail)
@@ -95,39 +95,9 @@ struct Writer(Stringable, Movable):
                     self.ansi_writer.reset_ansi()
                 return n^
 
-            _ = self.ansi_writer.write(char.as_bytes_slice())
+            _ = self.ansi_writer.write(rune)
 
         return len(src), Error()
-
-
-fn apply_truncate_to_bytes(span: Span[UInt8], width: UInt8) -> List[UInt8]:
-    """Truncates a byte slice at the given printable cell width.
-
-    Args:
-        span: The byte slice to truncate.
-        width: The maximum printable cell width.
-
-    Returns:
-        A new truncated byte slice.
-    """
-    return apply_truncate_to_bytes_with_tail(span, width, "")
-
-
-fn apply_truncate_to_bytes_with_tail(span: Span[UInt8], width: UInt8, tail: String) -> List[UInt8]:
-    """Shorthand for declaring a new default truncate-writer instance,
-    used to immediately truncate a byte slice. A tail is then added to the end of the byte slice.
-
-    Args:
-        span: The byte slice to truncate.
-        width: The maximum printable cell width.
-        tail: The tail to append to the truncated content.
-
-    Returns:
-        A new truncated byte slice.
-    """
-    var writer = Writer(width, str(tail))
-    _ = writer.write(span)
-    return writer.as_bytes()
 
 
 fn truncate(text: String, width: UInt8) -> String:
@@ -174,6 +144,6 @@ fn truncate_with_tail(text: String, width: UInt8, tail: String) -> String:
     ```
     .
     """
-    var writer = Writer(width, str(tail))
-    _ = writer.write(text.as_bytes_slice())
+    var writer = Writer(width, tail)
+    _ = writer.write(text)
     return String(writer.as_string_slice())
