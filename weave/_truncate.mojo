@@ -1,6 +1,6 @@
 from utils import Span, StringSlice
-from gojo.bytes import buffer
-from gojo.unicode import rune_width
+from .gojo.bytes import buffer
+from .gojo.unicode import rune_width
 import .ansi
 
 

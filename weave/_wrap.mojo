@@ -1,6 +1,6 @@
 from utils import Span, StringSlice
-from gojo.bytes import buffer
-from gojo.unicode import rune_width
+from .gojo.bytes import buffer
+from .gojo.unicode import rune_width
 import .ansi
 
 alias DEFAULT_NEWLINE = "\n"
@@ -68,7 +68,7 @@ struct Writer(Stringable, Movable):
         self.keep_newlines = keep_newlines
         self.preserve_space = preserve_space
         self.tab_width = tab_width
-        self.buf = buffer.new_buffer()
+        self.buf = buffer.Buffer()
         self.line_len = line_len
         self.ansi = ansi
         self.forceful_newline = forceful_newline

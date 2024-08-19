@@ -34,6 +34,9 @@ check_out_remote_module() (
         module_name=${module_names[$i]}
         path=${paths[$i]}
         cp -R ./$path ../../$module_name
+        echo $current_date_time > ../../$module_name/.checkoutinfo
+        echo "URL: $rurl" >> ../../$module_name/.checkoutinfo
+        echo "Path: $path" >> ../../$module_name/.checkoutinfo
     done
     cd ../
 )
@@ -49,8 +52,8 @@ build_dependencies() {
     for dir in "${dirs_to_remove[@]}"; do
         rm -R "gojo/${dir}"
     done
-    mojo package gojo
-    rm -R gojo
+    rm -R weave/gojo
+    mv gojo weave
 }
 
 if [ "$1" == "package" ]; then

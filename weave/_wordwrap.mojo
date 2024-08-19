@@ -1,5 +1,5 @@
 from utils import Span, StringSlice
-from gojo.bytes import buffer
+from .gojo.bytes import buffer
 import .ansi
 
 
@@ -66,9 +66,9 @@ struct Writer(Stringable, Movable):
         self.breakpoint = breakpoint
         self.newline = newline
         self.keep_newlines = keep_newlines
-        self.buf = buffer.new_buffer()
-        self.space = buffer.new_buffer()
-        self.word = buffer.new_buffer()
+        self.buf = buffer.Buffer()
+        self.space = buffer.Buffer()
+        self.word = buffer.Buffer()
         self.line_len = line_len
         self.ansi = ansi
 
