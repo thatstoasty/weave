@@ -12,6 +12,7 @@ fn test_printable_rune_length():
     var test = MojoTest("Testing ansi.printable_rune_width")
     test.assert_equal(printable_rune_width("🔥"), 2)
     test.assert_equal(printable_rune_width("こんにちは, 世界!"), 17)
+    test.assert_equal(printable_rune_width("I really \x1B[38;2;249;38;114mlove\x1B[0m Mojo!"), 19)
 
 
 # fn test_writer():

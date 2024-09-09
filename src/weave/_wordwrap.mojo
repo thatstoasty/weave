@@ -1,5 +1,5 @@
 from utils import Span, StringSlice
-from .gojo.bytes import buffer
+from gojo.bytes import buffer
 import .ansi
 
 

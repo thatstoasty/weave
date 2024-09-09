@@ -1,6 +1,6 @@
 # weave
 
-A collection of (ANSI-sequence aware) text reflow operations &amp; algorithms. A project to learn Mojo, Go, and how to work with buffers.
+A collection of (ANSI-sequence aware) text reflow operations & algorithms. A project to learn Mojo, Go, and how to work with buffers.
 
 Ported from/inspired by: <https://github.com/muesli/reflow/tree/master>
 

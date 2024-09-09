@@ -1,5 +1,5 @@
 from utils import Span
-from .gojo.bytes import Buffer
+from gojo.bytes import Buffer
 
 
 fn dedent(text: String) -> String:

@@ -1,6 +1,6 @@
-from .gojo.bytes import buffer
-from .gojo.builtins.bytes import has_suffix
-from .gojo.unicode import string_width
+from gojo.bytes import buffer
+from gojo.builtins.bytes import has_suffix
+from gojo.unicode import string_width
 
 
 alias ANSI_ESCAPE = String("[0m").as_bytes()
