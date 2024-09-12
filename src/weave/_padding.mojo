@@ -1,5 +1,5 @@
 from utils import Span, StringSlice
-from gojo.bytes import buffer
+import gojo.bytes
 from gojo.unicode import string_width
 import .ansi
 
@@ -15,7 +15,7 @@ struct Writer(Stringable, Movable):
         var writer = padding.Writer(4)
         _ = writer.write("Hello, World!")
         writer.flush()
-        print(String(writer.as_string_slice()))
+        print(str(writer))
     ```
     """
 
@@ -23,7 +23,7 @@ struct Writer(Stringable, Movable):
     """Padding width to apply to each line."""
     var ansi_writer: ansi.Writer
     """The ANSI aware writer that stores intermediary text content."""
-    var cache: buffer.Buffer
+    var cache: bytes.Buffer
     """The buffer that stores the padded content after it's been flushed."""
     var line_len: Int
     """The current line length."""
@@ -46,7 +46,7 @@ struct Writer(Stringable, Movable):
         self.padding = padding
         self.line_len = line_len
         self.in_ansi = in_ansi
-        self.cache = buffer.Buffer()
+        self.cache = bytes.Buffer()
         self.ansi_writer = ansi.Writer()
 
     fn __moveinit__(inout self, owned other: Self):
@@ -62,14 +62,6 @@ struct Writer(Stringable, Movable):
     fn as_bytes(self) -> List[UInt8]:
         """Returns the padded result as a byte list."""
         return self.cache.bytes()
-
-    fn as_bytes_slice(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
-        """Returns the padded result as a byte slice."""
-        return self.cache.as_bytes_slice()
-
-    fn as_string_slice(ref [_]self) -> StringSlice[__lifetime_of(self)]:
-        """Returns the padded result as a string slice."""
-        return StringSlice(unsafe_from_utf8=self.cache.as_bytes_slice())
 
     fn write(inout self, src: String) -> (Int, Error):
         """Pads content to the given printable cell width.
@@ -147,4 +139,4 @@ fn padding(text: String, width: UInt8) -> String:
     var writer = Writer(width)
     _ = writer.write(text)
     _ = writer.flush()
-    return String(writer.as_string_slice())
+    return str(writer)

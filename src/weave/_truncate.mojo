@@ -1,5 +1,5 @@
 from utils import Span, StringSlice
-from gojo.bytes import buffer
+import gojo.bytes
 from gojo.unicode import rune_width
 import .ansi
 
@@ -14,7 +14,7 @@ struct Writer(Stringable, Movable):
     fn main():
         var writer = truncate.Writer(4, tail=".")
         _ = writer.write("Hello, World!")
-        print(String(writer.as_string_slice()))
+        print(str(writer))
     ```
     .
     """
@@ -53,14 +53,6 @@ struct Writer(Stringable, Movable):
     fn as_bytes(self) -> List[UInt8]:
         """Returns the truncated result as a byte list."""
         return self.ansi_writer.forward.bytes()
-
-    fn as_bytes_slice(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
-        """Returns the truncated result as a byte slice."""
-        return self.ansi_writer.forward.as_bytes_slice()
-
-    fn as_string_slice(ref [_]self) -> StringSlice[__lifetime_of(self)]:
-        """Returns the truncated result as a string slice."""
-        return StringSlice(unsafe_from_utf8=self.ansi_writer.forward.as_bytes_slice())
 
     fn write(inout self, src: String) -> (Int, Error):
         """Truncates content at the given printable cell width, leaving any ANSI sequences intact.
@@ -146,4 +138,4 @@ fn truncate_with_tail(text: String, width: UInt8, tail: String) -> String:
     """
     var writer = Writer(width, tail)
     _ = writer.write(text)
-    return String(writer.as_string_slice())
+    return str(writer)

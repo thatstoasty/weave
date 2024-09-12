@@ -19,7 +19,7 @@ struct Writer(Stringable, Movable):
         var writer = wordwrap.Writer(5)
         _ = writer.write("Hello, World!")
         _ = writer.close()
-        print(String(writer.as_string_slice()))
+        print(str(writer))
     ```
     .
     """
@@ -89,14 +89,6 @@ struct Writer(Stringable, Movable):
     fn as_bytes(self) -> List[UInt8]:
         """Returns the word wrapped result as a byte list."""
         return self.buf.bytes()
-
-    fn as_bytes_slice(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
-        """Returns the word wrapped result as a byte slice."""
-        return self.buf.as_bytes_slice()
-
-    fn as_string_slice(ref [_]self) -> StringSlice[__lifetime_of(self)]:
-        """Returns the word wrapped result as a string slice."""
-        return StringSlice(unsafe_from_utf8=self.buf.as_bytes_slice())
 
     fn add_space(inout self):
         """Write the content of the space buffer to the word-wrap buffer."""
@@ -210,4 +202,4 @@ fn wordwrap(text: String, limit: Int) -> String:
     var writer = Writer(limit)
     _ = writer.write(text)
     _ = writer.close()
-    return String(writer.as_string_slice())
+    return str(writer)

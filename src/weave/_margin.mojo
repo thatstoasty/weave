@@ -1,5 +1,5 @@
 from utils import Span, StringSlice
-from gojo.bytes import buffer
+import gojo.bytes
 import . _padding as padding
 import . _indent as indent
 
@@ -15,12 +15,12 @@ struct Writer(Stringable, Movable):
         var writer = margin.Writer(5, 2)
         _ = writer.write("Hello, World!")
         _ = writer.close()
-        print(String(writer.as_string_slice()))
+        print(str(writer))
     ```
     .
     """
 
-    var buf: buffer.Buffer
+    var buf: bytes.Buffer
     var pw: padding.Writer
     var iw: indent.Writer
 
@@ -31,7 +31,7 @@ struct Writer(Stringable, Movable):
             pw: The padding-writer instance.
             iw: The indent-writer instance.
         """
-        self.buf = buffer.Buffer()
+        self.buf = bytes.Buffer()
         self.pw = pw^
         self.iw = iw^
 
@@ -42,7 +42,7 @@ struct Writer(Stringable, Movable):
             pad: Width of the padding of the padding-writer instance.
             indentation: Width of the indentation of the padding-writer instance.
         """
-        self.buf = buffer.Buffer()
+        self.buf = bytes.Buffer()
         self.pw = padding.Writer(pad)
         self.iw = indent.Writer(indentation)
 
@@ -57,14 +57,6 @@ struct Writer(Stringable, Movable):
     fn as_bytes(self) -> List[UInt8]:
         """Returns the wrapped result as a byte list."""
         return self.buf.bytes()
-
-    fn as_bytes_slice(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
-        """Returns the  wrapped result as a byte slice."""
-        return self.buf.as_bytes_slice()
-
-    fn as_string_slice(ref [_]self) -> StringSlice[__lifetime_of(self)]:
-        """Returns the wrapped result as a string slice."""
-        return StringSlice(unsafe_from_utf8=self.buf.as_bytes_slice())
 
     fn write(inout self, src: String) -> (Int, Error):
         """Writes the given byte slice to the writer.
@@ -86,7 +78,7 @@ struct Writer(Stringable, Movable):
     fn close(inout self):
         """Will finish the margin operation. Always call it before trying to retrieve the final result."""
         _ = self.pw.close()
-        _ = self.buf.write(self.pw.as_bytes_slice())
+        _ = self.buf.write_string(str(self.pw))
 
 
 fn margin(text: String, width: UInt8, margin: UInt8) -> String:
@@ -104,4 +96,4 @@ fn margin(text: String, width: UInt8, margin: UInt8) -> String:
     var writer = Writer(width, margin)
     _ = writer.write(text)
     _ = writer.close()
-    return String(writer.as_string_slice())
+    return str(writer)

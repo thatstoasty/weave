@@ -1,23 +1,16 @@
 from weave import padding
-from tests.wrapper import MojoTest
+import testing
 
 
-fn test_padding():
-    var test = MojoTest("Testing padding")
-    test.assert_equal(
+def test_padding():
+    testing.assert_equal(
         padding("Hello\nWorld\nThis is my text!", 20),
         String("Hello               \nWorld               \nThis is my text!    "),
     )
 
 
-fn test_unicode():
-    var test = MojoTest("Testing padding with unicode characters")
-    test.assert_equal(
+def test_unicode():
+    testing.assert_equal(
         padding("Hello\nWorld\nThis is my text! 🔥", 20),
         String("Hello               \nWorld               \nThis is my text! 🔥 "),
     )
-
-
-fn main():
-    test_padding()
-    test_unicode()

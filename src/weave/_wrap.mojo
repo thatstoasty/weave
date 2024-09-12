@@ -1,5 +1,5 @@
 from utils import Span, StringSlice
-from gojo.bytes import buffer
+import gojo.bytes
 from gojo.unicode import rune_width
 import .ansi
 
@@ -17,7 +17,7 @@ struct Writer(Stringable, Movable):
     fn main():
         var writer = wrap.Writer(5)
         _ = writer.write("Hello, World!")
-        print(String(writer.as_string_slice()))
+        print(str(writer))
     ```
     """
 
@@ -31,7 +31,7 @@ struct Writer(Stringable, Movable):
     """Whether to preserve space characters."""
     var tab_width: Int
     """The width of a tab character."""
-    var buf: buffer.Buffer
+    var buf: bytes.Buffer
     """The buffer that stores the wrapped content."""
     var line_len: Int
     """The current line length."""
@@ -68,7 +68,7 @@ struct Writer(Stringable, Movable):
         self.keep_newlines = keep_newlines
         self.preserve_space = preserve_space
         self.tab_width = tab_width
-        self.buf = buffer.Buffer()
+        self.buf = bytes.Buffer()
         self.line_len = line_len
         self.ansi = ansi
         self.forceful_newline = forceful_newline
@@ -90,14 +90,6 @@ struct Writer(Stringable, Movable):
     fn as_bytes(self) -> List[UInt8]:
         """Returns the wrapped result as a byte list."""
         return self.buf.bytes()
-
-    fn as_bytes_slice(ref [_]self) -> Span[UInt8, __lifetime_of(self)]:
-        """Returns the  wrapped result as a byte slice."""
-        return self.buf.as_bytes_slice()
-
-    fn as_string_slice(ref [_]self) -> StringSlice[__lifetime_of(self)]:
-        """Returns the wrapped result as a string slice."""
-        return StringSlice(unsafe_from_utf8=self.buf.as_bytes_slice())
 
     fn add_newline(inout self):
         """Adds a newline to the buffer and resets the line length."""
@@ -174,4 +166,4 @@ fn wrap(text: String, limit: Int) -> String:
     """
     var writer = Writer(limit)
     _ = writer.write(text)
-    return String(writer.as_string_slice())
+    return str(writer)

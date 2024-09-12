@@ -1,6 +1,6 @@
-from gojo.bytes import buffer
-from gojo.builtins.bytes import has_suffix
-from gojo.unicode import string_width
+from utils import StringSlice
+import gojo.bytes
+from gojo.unicode import string_width, rune_width
 
 
 alias ANSI_ESCAPE = String("[0m").as_bytes()
@@ -25,11 +25,15 @@ fn printable_rune_width(text: String) -> Int:
     var ansi = False
 
     for rune in text:
+        if len(rune) > 1:
+            length += string_width(rune)
+            continue
+
         if rune == Marker:
             # ANSI escape sequence
             ansi = True
         elif ansi:
-            if is_terminator(ord(String(rune))):
+            if is_terminator(int(rune.as_bytes_slice()[0])):
                 # ANSI sequence terminated
                 ansi = False
         else:
@@ -53,18 +57,18 @@ struct Writer:
     .
     """
 
-    var forward: buffer.Buffer
+    var forward: bytes.Buffer
     """The buffer that stores the text content."""
     var ansi: Bool
     """Whether the current character is part of an ANSI escape sequence."""
-    var ansi_seq: buffer.Buffer
+    var ansi_seq: bytes.Buffer
     """The buffer that stores the ANSI escape sequence."""
-    var last_seq: buffer.Buffer
+    var last_seq: bytes.Buffer
     """The buffer that stores the last ANSI escape sequence."""
     var seq_changed: Bool
     """Whether the ANSI escape sequence has changed."""
 
-    fn __init__(inout self, owned forward: buffer.Buffer = buffer.Buffer()):
+    fn __init__(inout self, owned forward: bytes.Buffer = bytes.Buffer()):
         """Initializes a new ANSI-writer instance.
 
         Args:
@@ -72,8 +76,8 @@ struct Writer:
         """
         self.forward = forward^
         self.ansi = False
-        self.ansi_seq = buffer.Buffer(capacity=128)
-        self.last_seq = buffer.Buffer(capacity=128)
+        self.ansi_seq = bytes.Buffer(capacity=128)
+        self.last_seq = bytes.Buffer(capacity=128)
         self.seq_changed = False
 
     fn __moveinit__(inout self, owned other: Writer):
@@ -103,7 +107,7 @@ struct Writer:
                 if is_terminator(ord(char)):
                     self.ansi = False
 
-                    if has_suffix(self.ansi_seq.bytes(), ANSI_ESCAPE):
+                    if bytes.has_suffix(self.ansi_seq.bytes(), ANSI_ESCAPE):
                         # reset sequence
                         self.last_seq.reset()
                         self.seq_changed = False
@@ -139,7 +143,7 @@ struct Writer:
             return
         var b = List[UInt8](capacity=512)
         for i in range(len(ANSI_RESET)):
-            b[i] = ANSI_RESET[i]
+            b.append(ANSI_RESET[i])
         _ = self.forward.write(b)
 
     fn restore_ansi(inout self):

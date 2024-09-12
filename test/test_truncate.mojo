@@ -1,17 +1,10 @@
 from weave import truncate
-from tests.wrapper import MojoTest
+import testing
 
 
-fn test_truncate() raises:
-    var test = MojoTest("Testing truncate")
-    test.assert_equal(truncate("abcdefghikl\nasjdn", 5), String("abcde"))
+def test_truncate():
+    testing.assert_equal(truncate("abcdefghikl\nasjdn", 5), String("abcde"))
 
 
-fn test_unicode():
-    var test = MojoTest("Testing truncate with unicode characters")
-    test.assert_equal(truncate("abcdefghikl🔥a\nsjdn🔥", 13), String("abcdefghikl🔥"))
-
-
-fn main() raises:
-    test_truncate()
-    test_unicode()
+def test_unicode():
+    testing.assert_equal(truncate("abcdefghikl🔥a\nsjdn🔥", 13), String("abcdefghikl🔥"))
