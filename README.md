@@ -1,6 +1,6 @@
 # weave
 
-A collection of (ANSI-sequence aware) text reflow operations &amp; algorithms. A project to learn Mojo, Go, and how to work with buffers.
+A collection of (ANSI-sequence aware) text reflow operations & algorithms. A project to learn Mojo, Go, and how to work with buffers.
 
 Ported from/inspired by: <https://github.com/muesli/reflow/tree/master>
 
@@ -9,6 +9,12 @@ I've only tested this on MacOS VSCode terminal so far, so your mileage may vary!
 TODO:
 
 - Handle different types of whitespace.
+
+## Installation
+
+You should be able to build the package by running `mojo package weave`. But, if you want to build the dependencies and then the package in case it's fallen out of sync, you can run `bash scripts/build.sh package` from the root of the project.
+
+> NOTE: It seems like `.mojopkg` files don't like being part of another package, eg. sticking all of your external deps in an `external` or `vendor` package. The only way I've gotten mojopkg files to work is to be in the same directory as the file being executed, or in the root directory like you can see in this project.
 
 ## Wrap (Unconditional Wrapping)
 
