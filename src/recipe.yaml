@@ -5,7 +5,7 @@ context:
 
 package:
   name: "weave"
-  version: 0.1.0.nightly
+  version: 0.1.1
 
 source:
   - path: .
@@ -20,8 +20,8 @@ build:
 
 requirements:
   run:
-    - max >= 24.6.0.dev2024091205
-    - gojo >= 0.1.7.nightly
+    - max >= 24.5.0,<25
+    - gojo >= 0.1.8,<0.2
 
 tests:
   - script:

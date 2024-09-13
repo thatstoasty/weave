@@ -1,16 +1,16 @@
 [project]
 authors = ["Mikhail Tavarez <miktavarez@gmail.com>"]
-channels = ["conda-forge", "https://conda.modular.com/max-nightly", "https://conda.modular.com/max", "https://repo.prefix.dev/mojo-community"]
+channels = ["https://repo.prefix.dev/mojo-community", "conda-forge", "https://conda.modular.com/max"]
 description = "A collection of (ANSI-sequence aware) text reflow operations & algorithms."
 name = "weave"
 platforms = ["osx-arm64", "linux-64"]
-version = "0.1.0.nightly"
+version = "0.1.1"
 
 [tasks]
 tests = "bash scripts/tests.sh"
-build = { cmd = "rattler-build build -r src -c https://conda.modular.com/max-nightly -c conda-forge -c https://repo.prefix.dev/mojo-community --skip-existing=all", env = {MODULAR_MOJO_NIGHTLY_IMPORT_PATH = "$CONDA_PREFIX/lib/mojo"} }
+build = "rattler-build build -r src -c https://repo.prefix.dev/mojo-community -c https://conda.modular.com/max -c conda-forge --skip-existing=all"
 publish = { cmd = "bash scripts/publish.sh", env = { PREFIX_API_KEY = "$PREFIX_API_KEY" } }
 
 [dependencies]
-max = ">=24.6.0.dev2024091205,<25"
-gojo = ">=0.1.7.nightly,<0.2"
+max = ">=24.5.0,<25"
+gojo = ">=0.1.8,<0.2"
