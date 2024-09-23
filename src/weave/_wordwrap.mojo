@@ -19,7 +19,7 @@ struct Writer(Stringable, Movable):
         var writer = wordwrap.Writer(5)
         _ = writer.write("Hello, World!")
         _ = writer.close()
-        print(str(writer))
+        print(writer.consume())
     ```
     .
     """
@@ -85,6 +85,9 @@ struct Writer(Stringable, Movable):
 
     fn __str__(self) -> String:
         return str(self.buf)
+
+    fn consume(inout self) -> String:
+        return self.buf.consume()
 
     fn as_bytes(self) -> List[UInt8]:
         """Returns the word wrapped result as a byte list."""
@@ -202,4 +205,4 @@ fn wordwrap(text: String, limit: Int) -> String:
     var writer = Writer(limit)
     _ = writer.write(text)
     _ = writer.close()
-    return str(writer)
+    return writer.consume()

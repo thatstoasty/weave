@@ -3,9 +3,9 @@ import gojo.bytes
 from gojo.unicode import string_width, rune_width
 
 
-alias ANSI_ESCAPE = String("[0m").as_bytes()
-alias ANSI_RESET = String("\x1b[0m").as_bytes()
-alias Marker = "\x1B"
+alias ANSI_ESCAPE = String("[0m").as_bytes_slice()
+alias ANSI_RESET = String("\x1b[0m").as_bytes_slice()
+alias Marker = "\x1B".as_string_slice()
 
 
 fn is_terminator(c: Int) -> Bool:
@@ -33,7 +33,7 @@ fn printable_rune_width(text: String) -> Int:
             # ANSI escape sequence
             ansi = True
         elif ansi:
-            if is_terminator(int(rune.as_bytes_slice()[0])):
+            if is_terminator(ord(rune)):
                 # ANSI sequence terminated
                 ansi = False
         else:
@@ -52,7 +52,7 @@ struct Writer:
     fn main():
         var writer = ansi.Writer()
         _ = writer.write("Hello, World!")
-        print(str(writer.forward))
+        print(writer.forward.consume())
     ```
     .
     """
@@ -121,6 +121,40 @@ struct Writer:
 
         return len(src), Error()
 
+    fn write(inout self, src: StringSlice) -> (Int, Error):
+        """Write content to the ANSI buffer.
+
+        Args:
+            src: The content to write.
+
+        Returns:
+            The number of bytes written and optional error.
+        """
+        for char in src:
+            if char == Marker:
+                # ANSI escape sequence
+                self.ansi = True
+                self.seq_changed = True
+                _ = self.ansi_seq.write(char.as_bytes_slice())
+            elif self.ansi:
+                _ = self.ansi_seq.write(char.as_bytes_slice())
+                if is_terminator(ord(char)):
+                    self.ansi = False
+
+                    if bytes.has_suffix(self.ansi_seq.bytes(), ANSI_ESCAPE):
+                        # reset sequence
+                        self.last_seq.reset()
+                        self.seq_changed = False
+                    elif char == "m":
+                        # color code
+                        _ = self.last_seq.write(self.ansi_seq.as_bytes_slice())
+
+                    _ = self.ansi_seq.write_to(self.forward)
+            else:
+                _ = self.forward.write(char.as_bytes_slice())
+
+        return len(src), Error()
+
     fn write_byte(inout self, byte: UInt8) -> Int:
         """Write a byte to the ANSI buffer.
 
@@ -141,10 +175,8 @@ struct Writer:
         """Resets the ANSI escape sequence."""
         if not self.seq_changed:
             return
-        var b = List[UInt8](capacity=512)
-        for i in range(len(ANSI_RESET)):
-            b.append(ANSI_RESET[i])
-        _ = self.forward.write(b)
+
+        _ = self.forward.write(ANSI_RESET)
 
     fn restore_ansi(inout self):
         """Restores the last ANSI escape sequence."""

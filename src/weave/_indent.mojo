@@ -12,7 +12,7 @@ struct Writer(Stringable, Movable):
     fn main():
         var writer = indent.Writer(4)
         _ = writer.write("Hello, World!")
-        print(str(writer))
+        print(writer.consume())
     ```
     """
 
@@ -45,15 +45,18 @@ struct Writer(Stringable, Movable):
     fn __str__(self) -> String:
         return str(self.ansi_writer.forward)
 
+    fn consume(inout self) -> String:
+        return self.ansi_writer.forward.consume()
+
     fn as_bytes(self) -> List[UInt8]:
         """Returns the indented result as a byte list."""
         return self.ansi_writer.forward.bytes()
 
     fn write(inout self, src: String) -> (Int, Error):
-        """Writes the given byte slice to the writer.
+        """Writes the given String to the writer.
 
         Args:
-            src: The byte slice to write.
+            src: The String to write.
 
         Returns:
             The number of bytes written and optional error.
@@ -78,7 +81,7 @@ struct Writer(Stringable, Movable):
                     self.skip_indent = True
                     self.ansi_writer.restore_ansi()
 
-                if rune == NEWLINE:
+                if rune == NEWLINE_RUNE:
                     # end of current line
                     self.skip_indent = False
 
@@ -113,4 +116,4 @@ fn indent(text: String, indent: UInt8) -> String:
     """
     var writer = Writer(indent)
     _ = writer.write(text)
-    return str(writer)
+    return writer.consume()

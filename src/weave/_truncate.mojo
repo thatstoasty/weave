@@ -14,7 +14,7 @@ struct Writer(Stringable, Movable):
     fn main():
         var writer = truncate.Writer(4, tail=".")
         _ = writer.write("Hello, World!")
-        print(str(writer))
+        print(writer.consume())
     ```
     .
     """
@@ -49,6 +49,9 @@ struct Writer(Stringable, Movable):
 
     fn __str__(self) -> String:
         return str(self.ansi_writer.forward)
+
+    fn consume(inout self) -> String:
+        return self.ansi_writer.forward.consume()
 
     fn as_bytes(self) -> List[UInt8]:
         """Returns the truncated result as a byte list."""
@@ -138,4 +141,4 @@ fn truncate_with_tail(text: String, width: UInt8, tail: String) -> String:
     """
     var writer = Writer(width, tail)
     _ = writer.write(text)
-    return str(writer)
+    return writer.consume()

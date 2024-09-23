@@ -15,7 +15,7 @@ struct Writer(Stringable, Movable):
         var writer = margin.Writer(5, 2)
         _ = writer.write("Hello, World!")
         _ = writer.close()
-        print(str(writer))
+        print(writer.consume())
     ```
     .
     """
@@ -54,15 +54,18 @@ struct Writer(Stringable, Movable):
     fn __str__(self) -> String:
         return str(self.buf)
 
+    fn consume(inout self) -> String:
+        return self.buf.consume()
+
     fn as_bytes(self) -> List[UInt8]:
         """Returns the wrapped result as a byte list."""
         return self.buf.bytes()
 
     fn write(inout self, src: String) -> (Int, Error):
-        """Writes the given byte slice to the writer.
+        """Writes the given String to the writer.
 
         Args:
-            src: The byte slice to write.
+            src: The String to write.
 
         Returns:
             The number of bytes written and optional error.
@@ -96,4 +99,4 @@ fn margin(text: String, width: UInt8, margin: UInt8) -> String:
     var writer = Writer(width, margin)
     _ = writer.write(text)
     _ = writer.close()
-    return str(writer)
+    return writer.consume()

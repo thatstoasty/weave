@@ -15,7 +15,7 @@ struct Writer(Stringable, Movable):
         var writer = padding.Writer(4)
         _ = writer.write("Hello, World!")
         writer.flush()
-        print(str(writer))
+        print(writer.consume())
     ```
     """
 
@@ -58,6 +58,9 @@ struct Writer(Stringable, Movable):
 
     fn __str__(self) -> String:
         return str(self.cache)
+
+    fn consume(inout self) -> String:
+        return self.cache.consume()
 
     fn as_bytes(self) -> List[UInt8]:
         """Returns the padded result as a byte list."""
@@ -139,4 +142,4 @@ fn padding(text: String, width: UInt8) -> String:
     var writer = Writer(width)
     _ = writer.write(text)
     _ = writer.flush()
-    return str(writer)
+    return writer.consume()
