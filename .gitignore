@@ -167,3 +167,6 @@ output
 
 # vscode
 .vscode/
+
+# Mojo
+*.mojopkg

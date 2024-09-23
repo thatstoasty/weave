@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased] - yyyy-mm-dd
 
+## [0.1.2] - 2024-09-23
+
+- Use `consume()` instead of `__str__()` to render the result from the buffers.
+
 ## [0.1.1] - 2024-09-13
 
 - First release with a changelog! Added rattler build and conda publish.

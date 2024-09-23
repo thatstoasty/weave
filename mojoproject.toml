@@ -4,13 +4,14 @@ channels = ["https://repo.prefix.dev/mojo-community", "conda-forge", "https://co
 description = "A collection of (ANSI-sequence aware) text reflow operations & algorithms."
 name = "weave"
 platforms = ["osx-arm64", "linux-64"]
-version = "0.1.1"
+version = "0.1.2"
 
 [tasks]
 tests = "bash scripts/tests.sh"
 build = "rattler-build build -r src -c https://repo.prefix.dev/mojo-community -c https://conda.modular.com/max -c conda-forge --skip-existing=all"
 publish = { cmd = "bash scripts/publish.sh", env = { PREFIX_API_KEY = "$PREFIX_API_KEY" } }
+benchmarks = "bash scripts/benchmarks.sh"
 
 [dependencies]
 max = ">=24.5.0,<25"
-gojo = ">=0.1.8,<0.2"
+gojo = ">=0.1.12,<0.2"
