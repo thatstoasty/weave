@@ -76,7 +76,7 @@ struct Writer(Stringable, Movable):
         var text = str(content)
         for char in text:
             # ANSI escape sequence
-            if char == ansi.Marker:
+            if char == ansi.ANSI_MARKER:
                 self.in_ansi = True
             elif self.in_ansi:
                 # ANSI sequence terminated

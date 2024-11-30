@@ -4,8 +4,7 @@ from .bytes import ByteWriter
 
 
 alias ANSI_ESCAPE = "[0m"
-alias ANSI_RESET = "\x1b[0m"
-alias Marker = "\x1B"
+alias ANSI_MARKER = "\x1b"
 
 
 fn equals(left: Span[Byte], right: Span[Byte]) -> Bool:
@@ -74,7 +73,7 @@ fn printable_rune_width(text: String) -> Int:
             length += string_width(char)
             continue
 
-        if char == Marker:
+        if char == ANSI_MARKER:
             # ANSI escape sequence
             ansi = True
         elif ansi:
@@ -137,14 +136,14 @@ struct Writer:
         self.last_seq = other.last_seq^
         self.seq_changed = other.seq_changed
 
-    fn write(inout self, content: String) -> None:
+    fn write(inout self, content: StringSlice) -> None:
         """Write content to the ANSI buffer.
 
         Args:
             content: The content to write.
         """
         for char in content:
-            if char == Marker:
+            if char == ANSI_MARKER:
                 # ANSI escape sequence
                 self.ansi = True
                 self.seq_changed = True
@@ -156,13 +155,13 @@ struct Writer:
 
                     if self.ansi_seq.as_string_slice().startswith(ANSI_ESCAPE):
                         # reset sequence
-                        self.last_seq = String(capacity=128)
+                        self.last_seq.reset()
                         self.seq_changed = False
                     elif char == "m":
                         # color code
                         self.last_seq.write(self.ansi_seq)
 
-                    self.ansi_seq.write(self.forward)
+                    self.forward.write(self.ansi_seq)
             else:
                 self.forward.write(char)
 
@@ -179,7 +178,7 @@ struct Writer:
         if not self.seq_changed:
             return
 
-        self.forward.write(ANSI_RESET)
+        self.forward.write(ANSI_MARKER + ANSI_ESCAPE)
 
     fn restore_ansi(inout self) -> None:
         """Restores the last ANSI escape sequence."""

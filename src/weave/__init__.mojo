@@ -4,7 +4,7 @@ from .marginer import margin
 from .padder import padding
 from .truncater import truncate
 from .wrapper import wrap
-from .word_wrapper import wordwrap
+from .word_wrapper import word_wrap
 
 
 alias SPACE = " "

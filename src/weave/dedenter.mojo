@@ -73,17 +73,21 @@ fn apply_dedent(text: String, indent: Int) -> String:
     Returns:
         A new dedented string.
     """
+    var should_omit = True
     var omitted = 0
     var buf = ByteWriter(capacity=int(len(text) * 1.25))
 
     for char in text:
         if char == "\t" or char == " ":
-            if omitted < indent:
-                omitted += 1
-            else:
-                buf.write(char)
+            if should_omit:
+                if omitted < indent:
+                    omitted += 1
+                    continue
+                should_omit = False
+            buf.write(char)
         elif char == "\n":
             omitted = 0
+            should_omit = True
             buf.write(char)
         else:
             buf.write(char)

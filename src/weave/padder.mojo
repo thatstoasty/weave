@@ -33,6 +33,7 @@ struct Writer(Stringable, Movable):
     fn __init__(
         out self,
         padding: Int,
+        *,
         line_len: Int = 0,
         in_ansi: Bool = False,
     ):
@@ -89,7 +90,7 @@ struct Writer(Stringable, Movable):
         """
         var text = str(src)
         for char in text:
-            if char == ansi.Marker:
+            if char == ansi.ANSI_MARKER:
                 self.in_ansi = True
             elif self.in_ansi:
                 if ansi.is_terminator(ord(char)):

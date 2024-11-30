@@ -28,7 +28,7 @@ struct Writer(Stringable, Movable):
     var in_ansi: Bool
     """Whether the current character is part of an ANSI escape sequence."""
 
-    fn __init__(out self, width: Int, tail: String, in_ansi: Bool = False):
+    fn __init__(out self, width: Int, tail: String, *, in_ansi: Bool = False):
         """Initializes a new truncate-writer instance.
 
         Args:
@@ -96,7 +96,7 @@ struct Writer(Stringable, Movable):
         var cur_width = 0
 
         for char in text:
-            if char == ansi.Marker:
+            if char == ansi.ANSI_MARKER:
                 # ANSI escape sequence
                 self.in_ansi = True
             elif self.in_ansi:

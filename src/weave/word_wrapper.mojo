@@ -4,7 +4,6 @@ from .bytes import ByteWriter
 
 
 alias DEFAULT_NEWLINE = "\n"
-alias DEFAULT_TAB_WIDTH = 4
 alias DEFAULT_BREAKPOINT = "-"
 
 
@@ -13,10 +12,10 @@ struct Writer(Stringable, Movable):
 
     Example Usage:
     ```mojo
-    from weave import word_wrapper as wordwrap
+    from weave import word_wrapper as word_wrap
 
     fn main():
-        var writer = wordwrap.Writer(5)
+        var writer = word_wrap.Writer(5)
         writer.write("Hello, World!")
         _ = writer.close()
         print(writer.consume())
@@ -46,6 +45,7 @@ struct Writer(Stringable, Movable):
     fn __init__(
         out self,
         limit: Int,
+        *,
         breakpoint: String = DEFAULT_BREAKPOINT,
         newline: String = DEFAULT_NEWLINE,
         keep_newlines: Bool = True,
@@ -152,7 +152,7 @@ struct Writer(Stringable, Movable):
 
         for char in text:
             # ANSI escape sequence
-            if char == ansi.Marker:
+            if char == ansi.ANSI_MARKER:
                 self.word.write_bytes(char.as_bytes())
                 self.ansi = True
             elif self.ansi:
@@ -202,7 +202,16 @@ struct Writer(Stringable, Movable):
         self.add_word()
 
 
-fn wordwrap[T: Stringable, //](text: T, limit: Int) -> String:
+fn word_wrap[
+    T: Stringable, //
+](
+    text: T,
+    limit: Int,
+    *,
+    newline: String = DEFAULT_NEWLINE,
+    keep_newlines: Bool = True,
+    breakpoint: String = DEFAULT_BREAKPOINT,
+) -> String:
     """Wraps `text` at `limit` characters per line, if the word can fit on the line.
     Otherwise, it will break prior to adding the word, then add it to the next line.
 
@@ -212,20 +221,23 @@ fn wordwrap[T: Stringable, //](text: T, limit: Int) -> String:
     Args:
         text: The string to wrap.
         limit: The maximum number of characters per line.
+        newline: The character to use as a newline.
+        keep_newlines: Whether to keep newlines in the content.
+        breakpoint: The character to use as a breakpoint.
 
     Returns:
-        A new word-wrapped string.
+        A new word wrapped string.
 
     ```mojo
-    from weave import wordwrap
+    from weave import word_wrap
 
     fn main():
-        var wrapped = wordwrap("Hello, World!", 5)
+        var wrapped = word_wrap("Hello, World!", 5)
         print(wrapped)
     ```
     .
     """
-    var writer = Writer(limit)
+    var writer = Writer(limit, newline=newline, keep_newlines=keep_newlines, breakpoint=breakpoint)
     writer.write(text)
     writer.close()
     return writer.consume()

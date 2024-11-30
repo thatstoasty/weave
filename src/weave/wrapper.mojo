@@ -1,7 +1,8 @@
 from utils import Span, StringSlice
-import .ansi
 from .unicode import string_width
 from .bytes import ByteWriter
+import .ansi
+import .word_wrapper
 
 alias DEFAULT_NEWLINE = "\n"
 alias DEFAULT_TAB_WIDTH = 4
@@ -43,6 +44,7 @@ struct Writer(Stringable, Movable):
     fn __init__(
         out self,
         limit: Int,
+        *,
         newline: String = DEFAULT_NEWLINE,
         keep_newlines: Bool = True,
         preserve_space: Bool = False,
@@ -140,7 +142,7 @@ struct Writer(Stringable, Movable):
             return
 
         for char in text:
-            if char == ansi.Marker:
+            if char == ansi.ANSI_MARKER:
                 self.ansi = True
             elif self.ansi:
                 if ansi.is_terminator(ord(char)):
@@ -166,7 +168,17 @@ struct Writer(Stringable, Movable):
             self.buf.write_bytes(char.as_bytes())
 
 
-fn wrap[T: Stringable, //](text: T, limit: Int) -> String:
+fn wrap[
+    T: Stringable, //
+](
+    text: T,
+    limit: Int,
+    *,
+    newline: String = DEFAULT_NEWLINE,
+    keep_newlines: Bool = True,
+    preserve_space: Bool = False,
+    tab_width: Int = DEFAULT_TAB_WIDTH,
+) -> String:
     """Wraps `text` at `limit` characters per line.
 
     Parameters:
@@ -175,6 +187,10 @@ fn wrap[T: Stringable, //](text: T, limit: Int) -> String:
     Args:
         text: The string to wrap.
         limit: The maximum line length before wrapping.
+        newline: The character to use as a newline.
+        keep_newlines: Whether to keep newlines in the content.
+        preserve_space: Whether to preserve space characters.
+        tab_width: The width of a tab character.
 
     Returns:
         A new wrapped string.
@@ -188,6 +204,8 @@ fn wrap[T: Stringable, //](text: T, limit: Int) -> String:
     ```
     .
     """
-    var writer = Writer(limit)
+    var writer = Writer(
+        limit, newline=newline, keep_newlines=keep_newlines, preserve_space=preserve_space, tab_width=tab_width
+    )
     writer.write(text)
     return writer.consume()
