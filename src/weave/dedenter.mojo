@@ -27,6 +27,7 @@ fn dedent[T: Stringable, //](content: T) -> String:
     """
     var text = str(content)
     var indent = min_indent(text)
+    print("min indent", indent)
     if indent == 0:
         return text
 
