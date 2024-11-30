@@ -54,7 +54,7 @@ fn min_indent(text: String) -> Int:
             cur_indent = 0
             should_append = True
         else:
-            if cur_indent > 0 and (min_indent == 0 or cur_indent < min_indent):
+            if should_append and (min_indent == 0 or cur_indent < min_indent):
                 min_indent = cur_indent
                 cur_indent = 0
             should_append = False

@@ -11,9 +11,8 @@ def test_dedent():
 
 
 def test_noop():
-    # TODO: Need to fix this case, current algorithm cannot handle the the next line has no leading space.
     # Second line has no leading space, no dendenting applied.
-    # testing.assert_equal(dedent("  Line 1!\nLine 2!"), "  Line 1!\nLine 2!")
+    testing.assert_equal(dedent("  Line 1!\nLine 2!"), "  Line 1!\nLine 2!")
 
     # Only newlines, no dedenting applied.
     testing.assert_equal(dedent("\n\n\n"), "\n\n\n")

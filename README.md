@@ -11,8 +11,8 @@ TODO:
 ## Installation
 
 1. First, you'll need to configure your `mojoproject.toml` file to include my Conda channel. Add `"https://repo.prefix.dev/mojo-community"` to the list of channels.
-2. Next, add `prism` to your project's dependencies by running `magic add prism`.
-3. Finally, run `magic install` to install in `prism` and its dependencies. You should see the `.mojopkg` files in `$CONDA_PREFIX/lib/mojo/` (usually resolves to `.magic/envs/default/lib/mojo`).
+2. Next, add `weave` to your project's dependencies by running `magic add weave`.
+3. Finally, run `magic install` to install in `weave` and its dependencies. You should see the `.mojopkg` files in `$CONDA_PREFIX/lib/mojo/` (usually resolves to `.magic/envs/default/lib/mojo`).
 
 ## Wrap (Unconditional Wrapping)
 
