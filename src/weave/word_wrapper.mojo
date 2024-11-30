@@ -1,6 +1,6 @@
 from utils import Span, StringSlice
-from gojo.bytes import buffer
 import .ansi
+from .bytes import ByteWriter
 
 
 alias DEFAULT_NEWLINE = "\n"
@@ -13,11 +13,11 @@ struct Writer(Stringable, Movable):
 
     Example Usage:
     ```mojo
-    from weave import _wordwrap as wordwrap
+    from weave import word_wrapper as wordwrap
 
     fn main():
         var writer = wordwrap.Writer(5)
-        _ = writer.write("Hello, World!")
+        writer.write("Hello, World!")
         _ = writer.close()
         print(writer.consume())
     ```
@@ -32,11 +32,11 @@ struct Writer(Stringable, Movable):
     """The character to use as a newline."""
     var keep_newlines: Bool
     """Whether to keep newlines in the content."""
-    var buf: buffer.Buffer
+    var buf: ByteWriter
     """The buffer that stores the word-wrapped content."""
-    var space: buffer.Buffer
+    var space: ByteWriter
     """The buffer that stores the space between words."""
-    var word: buffer.Buffer
+    var word: ByteWriter
     """The buffer that stores the current word."""
     var line_len: Int
     """The current line length."""
@@ -44,7 +44,7 @@ struct Writer(Stringable, Movable):
     """Whether the current character is part of an ANSI escape sequence."""
 
     fn __init__(
-        inout self,
+        out self,
         limit: Int,
         breakpoint: String = DEFAULT_BREAKPOINT,
         newline: String = DEFAULT_NEWLINE,
@@ -52,7 +52,7 @@ struct Writer(Stringable, Movable):
         line_len: Int = 0,
         ansi: Bool = False,
     ):
-        """Initializes a new word-wrap writer instance.
+        """Initializes a new word wrap writer.
 
         Args:
             limit: The maximum number of characters per line.
@@ -66,13 +66,18 @@ struct Writer(Stringable, Movable):
         self.breakpoint = breakpoint
         self.newline = newline
         self.keep_newlines = keep_newlines
-        self.buf = buffer.Buffer()
-        self.space = buffer.Buffer()
-        self.word = buffer.Buffer()
+        self.buf = ByteWriter()
+        self.space = ByteWriter()
+        self.word = ByteWriter()
         self.line_len = line_len
         self.ansi = ansi
 
-    fn __moveinit__(inout self, owned other: Self):
+    fn __moveinit__(out self, owned other: Self):
+        """Constructs a new `Writer` by taking the content of the other `Writer`.
+
+        Args:
+            other: The other `Writer` to take the content from.
+        """
         self.limit = other.limit
         self.breakpoint = other.breakpoint
         self.newline = other.newline
@@ -84,107 +89,125 @@ struct Writer(Stringable, Movable):
         self.ansi = other.ansi
 
     fn __str__(self) -> String:
+        """Returns the word wrapped result as a string by copying the content of the internal buffer.
+
+        Returns:
+            The word wrapped string.
+        """
         return str(self.buf)
 
     fn consume(inout self) -> String:
+        """Returns the word wrapped result as a string by taking the data from the internal buffer.
+
+        Returns:
+            The word wrapped string.
+        """
         return self.buf.consume()
 
-    fn as_bytes(self) -> List[UInt8]:
-        """Returns the word wrapped result as a byte list."""
-        return self.buf.bytes()
+    fn as_bytes(self) -> Span[Byte, __origin_of(self.buf)]:
+        """Returns the word wrapped result as a byte list.
+
+        Returns:
+            The word wrapped result as a Byte Span.
+        """
+        return self.buf.as_bytes()
 
     fn add_space(inout self):
         """Write the content of the space buffer to the word-wrap buffer."""
         self.line_len += len(self.space)
-        _ = self.buf.write(self.space.bytes())
+        self.buf.write(self.space)
         self.space.reset()
 
     fn add_word(inout self):
         """Write the content of the word buffer to the word-wrap buffer."""
         if len(self.word) > 0:
             self.add_space()
-            self.line_len += ansi.printable_rune_width(str(self.word))
-            _ = self.buf.write(self.word.bytes())
-            self.word.reset()
+            word = self.word.consume(reuse=True)
+            self.line_len += ansi.printable_rune_width(word)
+            self.buf.write(word)
 
     fn add_newline(inout self):
         """Write a newline to the word-wrap buffer and reset the line length & space buffer."""
-        _ = self.buf.write_byte(NEWLINE_BYTE)
+        self.buf.write(NEWLINE)
         self.line_len = 0
         self.space.reset()
 
-    fn write(inout self, src: String) -> (Int, Error):
-        """Write more content to the word-wrap buffer.
+    fn write[T: Stringable, //](inout self, content: T) -> None:
+        """Writes the text, `content`, to the writer, wrapping lines once the limit is reached.
+        If the word cannot fit on the line, then it will be written to the next line.
+
+        Parameters:
+            T: The type of the Stringable object.
 
         Args:
-            src: The content to write.
-
-        Returns:
-            The number of bytes written. and optional error.
+            content: The content to write.
         """
+        var text = str(content)
         if self.limit == 0:
-            return self.buf.write(src.as_bytes_slice())
+            self.buf.write(text)
+            return
 
-        var s = src
         if not self.keep_newlines:
-            s = s.strip()
-            s = s.replace("\n", " ")
+            text = text.strip().replace("\n", " ")
 
-        for rune in s:
-            if rune == ansi.Marker:
-                # ANSI escape sequence
-                _ = self.word.write(rune.as_bytes_slice())
+        for char in text:
+            # ANSI escape sequence
+            if char == ansi.Marker:
+                self.word.write_bytes(char.as_bytes())
                 self.ansi = True
             elif self.ansi:
-                _ = self.word.write(rune.as_bytes_slice())
-                if ansi.is_terminator(ord(rune)):
-                    # ANSI sequence terminated
+                self.word.write_bytes(char.as_bytes())
+
+                # ANSI sequence terminated
+                if ansi.is_terminator(ord(char)):
                     self.ansi = False
-            elif rune == self.newline:
-                # end of current line
-                # see if we can add the content of the space buffer to the current line
+
+            # end of current line
+            # see if we can add the content of the space buffer to the current line
+            elif char == self.newline:
                 if len(self.word) == 0:
                     if self.line_len + len(self.space) > self.limit:
                         self.line_len = 0
+
+                    # preserve whitespace
                     else:
-                        # preserve whitespace
-                        _ = self.buf.write(self.space.as_bytes_slice())
-
+                        self.buf.write(self.space)
                     self.space.reset()
-
                 self.add_word()
                 self.add_newline()
-            elif rune == SPACE:
-                # end of current word
+
+            # end of current word
+            elif char == SPACE:
                 self.add_word()
-                _ = self.space.write(rune.as_bytes_slice())
-            elif rune == self.breakpoint:
-                # valid breakpoint
+                self.space.write(SPACE)
+
+            # valid breakpoint
+            elif char == self.breakpoint:
                 self.add_space()
                 self.add_word()
-                _ = self.buf.write(rune.as_bytes_slice())
+                self.buf.write(self.breakpoint)
+
+            # any other character
             else:
-                # any other character
-                _ = self.word.write(rune.as_bytes_slice())
+                self.word.write_bytes(char.as_bytes())
 
                 # add a line break if the current word would exceed the line's
                 # character limit
-                if (
-                    self.line_len + len(self.space) + ansi.printable_rune_width(str(self.word)) > self.limit
-                    and ansi.printable_rune_width(str(self.word)) < self.limit
-                ):
+                var word_width = ansi.printable_rune_width(str(self.word))
+                if word_width < self.limit and self.line_len + len(self.space) + word_width > self.limit:
                     self.add_newline()
-
-        return len(src), Error()
 
     fn close(inout self):
         """Finishes the word-wrap operation. Always call it before trying to retrieve the final result."""
         self.add_word()
 
 
-fn wordwrap(text: String, limit: Int) -> String:
-    """Shorthand for declaring a new default WordWrap instance,
-    used to immediately wrap a string.
+fn wordwrap[T: Stringable, //](text: T, limit: Int) -> String:
+    """Wraps `text` at `limit` characters per line, if the word can fit on the line.
+    Otherwise, it will break prior to adding the word, then add it to the next line.
+
+    Parameters:
+        T: The type of the Stringable object.
 
     Args:
         text: The string to wrap.
@@ -203,6 +226,6 @@ fn wordwrap(text: String, limit: Int) -> String:
     .
     """
     var writer = Writer(limit)
-    _ = writer.write(text)
-    _ = writer.close()
+    writer.write(text)
+    writer.close()
     return writer.consume()

@@ -9,7 +9,13 @@ repos:
     hooks:
       - id: mojo-format
         name: mojo-format
-        entry: magic run mojo format -l 120
+        entry: mojo format -l 120
         language: system
         files: '\.(mojo|🔥)$'
         stages: [commit]
+      # - id: mojo-docs
+      #   name: mojo-docs
+      #   entry: mojo doc --diagnose-missing-doc-strings -o /dev/null src
+      #   language: system
+      #   files: '\.(mojo|🔥)$'
+      #   stages: [commit]

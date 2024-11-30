@@ -7,16 +7,16 @@ struct Writer(Stringable, Movable):
 
     Example Usage:
     ```mojo
-    from weave import _indent as indent
+    from weave import indenter as indent
 
     fn main():
         var writer = indent.Writer(4)
-        _ = writer.write("Hello, World!")
-        print(writer.consume())
+        writer.write("Hello, World!")
+        print(str(writer))
     ```
     """
 
-    var indent: UInt8
+    var indent: Int
     """The number of spaces to indent each line."""
     var ansi_writer: ansi.Writer
     """The ANSI aware writer that stores the text content."""
@@ -25,7 +25,7 @@ struct Writer(Stringable, Movable):
     var in_ansi: Bool
     """Whether the current character is part of an ANSI escape sequence."""
 
-    fn __init__(inout self, indent: UInt8):
+    fn __init__(out self, indent: Int):
         """Initializes a new indent-writer instance.
 
         Args:
@@ -36,66 +36,71 @@ struct Writer(Stringable, Movable):
         self.skip_indent = False
         self.in_ansi = False
 
-    fn __moveinit__(inout self, owned other: Self):
+    fn __moveinit__(out self, owned other: Self):
+        """Constructs a new `Writer` by taking the content of the other `Writer`.
+
+        Args:
+            other: The other `Writer` to take the content from.
+        """
         self.indent = other.indent
         self.ansi_writer = other.ansi_writer^
         self.skip_indent = other.skip_indent
         self.in_ansi = other.in_ansi
 
     fn __str__(self) -> String:
+        """Returns the indented result as a string by copying the content of the internal buffer.
+
+        Returns:
+            The indented string.
+        """
         return str(self.ansi_writer.forward)
 
     fn consume(inout self) -> String:
-        return self.ansi_writer.forward.consume()
-
-    fn as_bytes(self) -> List[UInt8]:
-        """Returns the indented result as a byte list."""
-        return self.ansi_writer.forward.bytes()
-
-    fn write(inout self, src: String) -> (Int, Error):
-        """Writes the given String to the writer.
-
-        Args:
-            src: The String to write.
+        """Returns the indented result as a string by taking the data from the internal buffer.
 
         Returns:
-            The number of bytes written and optional error.
+            The indented string.
         """
-        var err = Error()
-        for rune in src:
-            if rune == ansi.Marker:
-                # ANSI escape sequence
+        return self.ansi_writer.forward.consume()
+
+    fn write[T: Stringable, //](inout self, content: T) -> None:
+        """Writes the text, `content`, to the writer,
+        indenting each line by `self.indent` spaces.
+
+        Parameters:
+            T: The type of the Stringable object.
+
+        Args:
+            content: The String to write.
+        """
+        var text = str(content)
+        for char in text:
+            # ANSI escape sequence
+            if char == ansi.Marker:
                 self.in_ansi = True
             elif self.in_ansi:
-                if ansi.is_terminator(ord(rune)):
-                    # ANSI sequence terminated
+                # ANSI sequence terminated
+                if ansi.is_terminator(ord(char)):
                     self.in_ansi = False
             else:
                 if not self.skip_indent:
                     self.ansi_writer.reset_ansi()
-                    var bytes_written = 0
-                    bytes_written, err = self.ansi_writer.write(SPACE * int(self.indent))
-                    if err:
-                        return bytes_written, err
-
+                    self.ansi_writer.write(SPACE * int(self.indent))
                     self.skip_indent = True
                     self.ansi_writer.restore_ansi()
 
-                if rune == NEWLINE_RUNE:
-                    # end of current line
+                # end of current line
+                if char == NEWLINE:
                     self.skip_indent = False
 
-            var bytes_written = 0
-            bytes_written, err = self.ansi_writer.write(rune)
-            if err:
-                return bytes_written, err
-
-        return len(src), err
+            self.ansi_writer.write(char)
 
 
-fn indent(text: String, indent: UInt8) -> String:
-    """Shorthand for declaring a new default indent-writer instance,
-    used to immediately indent a string.
+fn indent[T: Stringable, //](text: T, indent: Int) -> String:
+    """Indents `text` with a `indent` number of spaces.
+
+    Parameters:
+        T: The type of the Stringable object.
 
     Args:
         text: The string to indent.
@@ -104,16 +109,15 @@ fn indent(text: String, indent: UInt8) -> String:
     Returns:
         A new indented string.
 
-    Example Usage:
+    Examples:
     ```mojo
     from weave import indent
 
     fn main():
-        var indented = indent("Hello, World!", 4)
-        print(indented)
+        print(indent("Hello, World!", 4))
     ```
     .
     """
     var writer = Writer(indent)
-    _ = writer.write(text)
+    writer.write(text)
     return writer.consume()

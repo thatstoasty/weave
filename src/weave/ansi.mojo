@@ -1,14 +1,59 @@
-from utils import StringSlice
-import gojo.bytes
-from gojo.unicode import string_width, rune_width
+from utils import StringSlice, Span
+from .unicode import string_width, rune_width
+from .bytes import ByteWriter
 
 
-alias ANSI_ESCAPE = String("[0m").as_bytes_slice()
-alias ANSI_RESET = String("\x1b[0m").as_bytes_slice()
-alias Marker = "\x1B".as_string_slice()
+alias ANSI_ESCAPE = "[0m"
+alias ANSI_RESET = "\x1b[0m"
+alias Marker = "\x1B"
+
+
+fn equals(left: Span[Byte], right: Span[Byte]) -> Bool:
+    """Reports if `left` and `right` are equal.
+
+    Args:
+        left: The first bytes to compare.
+        right: The second bytes to compare.
+
+    Returns:
+        True if the bytes are equal, False otherwise.
+    """
+    if len(left) != len(right):
+        return False
+
+    for i in range(len(left)):
+        if left[i] != right[i]:
+            return False
+    return True
+
+
+fn has_suffix(bytes: Span[Byte], suffix: Span[Byte]) -> Bool:
+    """Reports if the list ends with suffix.
+
+    Args:
+        bytes: The bytes to search.
+        suffix: The suffix to search for.
+
+    Returns:
+        True if the bytes end with the suffix, False otherwise.
+    """
+    if len(bytes) < len(suffix):
+        return False
+
+    if not equals(bytes[len(bytes) - len(suffix) : len(bytes)], suffix):
+        return False
+    return True
 
 
 fn is_terminator(c: Int) -> Bool:
+    """Reports if the rune is a terminator.
+
+    Args:
+        c: The rune to check.
+
+    Returns:
+        True if the rune is a terminator, False otherwise.
+    """
     return (c >= 0x40 and c <= 0x5A) or (c >= 0x61 and c <= 0x7A)
 
 
@@ -24,20 +69,20 @@ fn printable_rune_width(text: String) -> Int:
     var length = 0
     var ansi = False
 
-    for rune in text:
-        if len(rune) > 1:
-            length += string_width(rune)
+    for char in text:
+        if len(char) > 1:
+            length += string_width(char)
             continue
 
-        if rune == Marker:
+        if char == Marker:
             # ANSI escape sequence
             ansi = True
         elif ansi:
-            if is_terminator(ord(rune)):
+            if is_terminator(ord(char)):
                 # ANSI sequence terminated
                 ansi = False
         else:
-            length += string_width(rune)
+            length += string_width(char)
 
     return length
 
@@ -51,24 +96,24 @@ struct Writer:
 
     fn main():
         var writer = ansi.Writer()
-        _ = writer.write("Hello, World!")
-        print(writer.forward.consume())
+        writer.write("Hello, World!")
+        print(writer.forward)
     ```
     .
     """
 
-    var forward: bytes.Buffer
+    var forward: ByteWriter
     """The buffer that stores the text content."""
     var ansi: Bool
     """Whether the current character is part of an ANSI escape sequence."""
-    var ansi_seq: bytes.Buffer
+    var ansi_seq: ByteWriter
     """The buffer that stores the ANSI escape sequence."""
-    var last_seq: bytes.Buffer
+    var last_seq: ByteWriter
     """The buffer that stores the last ANSI escape sequence."""
     var seq_changed: Bool
     """Whether the ANSI escape sequence has changed."""
 
-    fn __init__(inout self, owned forward: bytes.Buffer = bytes.Buffer()):
+    fn __init__(out self, owned forward: ByteWriter = ByteWriter()):
         """Initializes a new ANSI-writer instance.
 
         Args:
@@ -76,108 +121,66 @@ struct Writer:
         """
         self.forward = forward^
         self.ansi = False
-        self.ansi_seq = bytes.Buffer(capacity=128)
-        self.last_seq = bytes.Buffer(capacity=128)
+        self.ansi_seq = ByteWriter(capacity=128)
+        self.last_seq = ByteWriter(capacity=128)
         self.seq_changed = False
 
-    fn __moveinit__(inout self, owned other: Writer):
+    fn __moveinit__(out self, owned other: Writer):
+        """Constructs a new `Writer` by taking the content of the other `Writer`.
+
+        Args:
+            other: The other `Writer` to take the content from.
+        """
         self.forward = other.forward^
         self.ansi = other.ansi
         self.ansi_seq = other.ansi_seq^
         self.last_seq = other.last_seq^
         self.seq_changed = other.seq_changed
 
-    fn write(inout self, src: String) -> (Int, Error):
+    fn write(inout self, content: String) -> None:
         """Write content to the ANSI buffer.
 
         Args:
-            src: The content to write.
-
-        Returns:
-            The number of bytes written and optional error.
+            content: The content to write.
         """
-        for char in src:
+        for char in content:
             if char == Marker:
                 # ANSI escape sequence
                 self.ansi = True
                 self.seq_changed = True
-                _ = self.ansi_seq.write(char.as_bytes_slice())
+                self.ansi_seq.write(char)
             elif self.ansi:
-                _ = self.ansi_seq.write(char.as_bytes_slice())
+                self.ansi_seq.write(char)
                 if is_terminator(ord(char)):
                     self.ansi = False
 
-                    if bytes.has_suffix(self.ansi_seq.bytes(), ANSI_ESCAPE):
+                    if self.ansi_seq.as_string_slice().startswith(ANSI_ESCAPE):
                         # reset sequence
-                        self.last_seq.reset()
+                        self.last_seq = String(capacity=128)
                         self.seq_changed = False
                     elif char == "m":
                         # color code
-                        _ = self.last_seq.write(self.ansi_seq.as_bytes_slice())
+                        self.last_seq.write(self.ansi_seq)
 
-                    _ = self.ansi_seq.write_to(self.forward)
+                    self.ansi_seq.write(self.forward)
             else:
-                _ = self.forward.write(char.as_bytes_slice())
+                self.forward.write(char)
 
-        return len(src), Error()
-
-    fn write(inout self, src: StringSlice) -> (Int, Error):
-        """Write content to the ANSI buffer.
-
-        Args:
-            src: The content to write.
+    fn last_sequence(self) -> StringSlice[__origin_of(self.last_seq)]:
+        """Returns the last ANSI escape sequence.
 
         Returns:
-            The number of bytes written and optional error.
+            The last ANSI escape sequence.
         """
-        for char in src:
-            if char == Marker:
-                # ANSI escape sequence
-                self.ansi = True
-                self.seq_changed = True
-                _ = self.ansi_seq.write(char.as_bytes_slice())
-            elif self.ansi:
-                _ = self.ansi_seq.write(char.as_bytes_slice())
-                if is_terminator(ord(char)):
-                    self.ansi = False
+        return self.last_seq.as_string_slice()
 
-                    if bytes.has_suffix(self.ansi_seq.bytes(), ANSI_ESCAPE):
-                        # reset sequence
-                        self.last_seq.reset()
-                        self.seq_changed = False
-                    elif char == "m":
-                        # color code
-                        _ = self.last_seq.write(self.ansi_seq.as_bytes_slice())
-
-                    _ = self.ansi_seq.write_to(self.forward)
-            else:
-                _ = self.forward.write(char.as_bytes_slice())
-
-        return len(src), Error()
-
-    fn write_byte(inout self, byte: UInt8) -> Int:
-        """Write a byte to the ANSI buffer.
-
-        Args:
-            byte: The byte to write.
-
-        Returns:
-            The number of bytes written.
-        """
-        _ = self.forward.write_byte(byte)
-        return 1
-
-    fn last_sequence(self) -> String:
-        """Returns the last ANSI escape sequence."""
-        return str(self.last_seq)
-
-    fn reset_ansi(inout self):
+    fn reset_ansi(inout self) -> None:
         """Resets the ANSI escape sequence."""
         if not self.seq_changed:
             return
 
-        _ = self.forward.write(ANSI_RESET)
+        self.forward.write(ANSI_RESET)
 
-    fn restore_ansi(inout self):
+    fn restore_ansi(inout self) -> None:
         """Restores the last ANSI escape sequence."""
-        _ = self.forward.write(self.last_seq.as_bytes_slice())
+        self.forward.write(self.last_seq)
