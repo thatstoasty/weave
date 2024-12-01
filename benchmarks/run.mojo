@@ -1,7 +1,7 @@
 import benchmark
 import pathlib
 import time
-from weave import dedent, indent, margin, padding, truncate, wordwrap, wrap
+from weave import dedent, indent, margin, padding, truncate, word_wrap, wrap
 from weave.bytes import ByteWriter
 
 
@@ -35,7 +35,7 @@ fn benchmarks() raises:
         print("Wrap duration:", (time.perf_counter_ns() - start) / 1000, "ms")
 
         start = time.perf_counter_ns()
-        result = wordwrap(text, 100)
+        result = word_wrap(text, 100)
         print("Wordwrap duration:", (time.perf_counter_ns() - start) / 1000, "ms")
 
         start = time.perf_counter_ns()
