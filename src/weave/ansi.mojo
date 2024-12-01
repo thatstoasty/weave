@@ -143,8 +143,8 @@ struct Writer:
             content: The content to write.
         """
         for char in content:
+            # ANSI escape sequence
             if char == ANSI_MARKER:
-                # ANSI escape sequence
                 self.ansi = True
                 self.seq_changed = True
                 self.ansi_seq.write(char)
