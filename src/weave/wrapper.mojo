@@ -1,4 +1,5 @@
-from utils import Span, StringSlice
+from utils import StringSlice
+from memory import Span
 from .unicode import string_width
 from .bytes import ByteWriter
 import .ansi
@@ -99,7 +100,7 @@ struct Writer(Stringable, Movable):
         """
         return str(self.buf)
 
-    fn consume(inout self) -> String:
+    fn consume(mut self) -> String:
         """Returns the wrapped result as a string by taking the data from the internal buffer.
 
         Returns:
@@ -115,12 +116,12 @@ struct Writer(Stringable, Movable):
         """
         return self.buf.as_bytes()
 
-    fn add_newline(inout self) -> None:
+    fn add_newline(mut self) -> None:
         """Adds a newline to the buffer and resets the line length."""
         self.buf.write(self.newline)
         self.line_len = 0
 
-    fn write[T: Stringable, //](inout self, content: T) -> None:
+    fn write[T: Stringable, //](mut self, content: T) -> None:
         """Writes the text, `content`, to the writer, wrapping lines once the limit is reached.
 
         Parameters:

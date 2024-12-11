@@ -4,7 +4,7 @@ channels = ["conda-forge", "https://conda.modular.com/max"]
 description = "A collection of (ANSI-sequence aware) text reflow operations & algorithms."
 name = "weave"
 platforms = ["osx-arm64", "linux-64"]
-version = "0.1.3.nightly3"
+version = "0.1.3.nightly4"
 license = "MIT"
 license-file = "LICENSE"
 homepage = "https://github.com/thatstoasty/weave"
@@ -26,7 +26,7 @@ max = ">=24.5.0,<25"
 channels = ["conda-forge", "https://conda.modular.com/max-nightly"]
 
 [feature.nightly.dependencies]
-max = ">=24.6.0.dev2024120416"
+max = ">=24.6.0.dev2024121016"
 
 [environments]
 nightly = ["nightly"]

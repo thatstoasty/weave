@@ -1,4 +1,5 @@
-from utils import Span, StringSlice
+from utils import StringSlice
+from memory import Span
 import . padder as padding
 import . indenter as indent
 from .bytes import ByteWriter
@@ -67,7 +68,7 @@ struct Writer(Stringable, Movable):
         """
         return str(self.buf)
 
-    fn consume(inout self) -> String:
+    fn consume(mut self) -> String:
         """Returns the result with margin applied as a string by taking the data from the internal buffer.
 
         Returns:
@@ -83,7 +84,7 @@ struct Writer(Stringable, Movable):
         """
         return self.buf.as_bytes()
 
-    fn write[T: Stringable, //](inout self, content: T) -> None:
+    fn write[T: Stringable, //](mut self, content: T) -> None:
         """Writes the text, `content`, to the writer, with the
         padding and indentation applied.
 
@@ -97,7 +98,7 @@ struct Writer(Stringable, Movable):
         self.iw.write(text)
         self.pw.write(self.iw.consume())
 
-    fn close(inout self):
+    fn close(mut self):
         """Will finish the margin operation. Always call it before trying to retrieve the final result."""
         self.pw.flush()
         self.buf.write(self.pw.consume())

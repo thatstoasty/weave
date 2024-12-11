@@ -1,4 +1,5 @@
-from utils import Span, StringSlice
+from utils import StringSlice
+from memory import Span
 import .ansi
 from .bytes import ByteWriter
 from .unicode import string_width
@@ -60,7 +61,7 @@ struct Writer(Stringable, Movable):
         """
         return str(self.ansi_writer.forward)
 
-    fn consume(inout self) -> String:
+    fn consume(mut self) -> String:
         """Returns the truncated result as a string by taking the data from the internal buffer.
 
         Returns:
@@ -76,7 +77,7 @@ struct Writer(Stringable, Movable):
         """
         return self.ansi_writer.forward.as_bytes()
 
-    fn write[T: Stringable, //](inout self, content: T) -> None:
+    fn write[T: Stringable, //](mut self, content: T) -> None:
         """Writes the text, `content`, to the writer, truncating content at the given printable cell width,
         leaving any ANSI sequences intact.
 

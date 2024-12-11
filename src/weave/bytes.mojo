@@ -1,6 +1,6 @@
-from utils import StringSlice, Span
+from utils import StringSlice
 from algorithm.memory import parallel_memcpy
-from memory import UnsafePointer
+from memory import UnsafePointer, Span
 
 
 struct ByteWriter(Writer, Writable, Stringable, Sized):
@@ -115,7 +115,7 @@ struct ByteWriter(Writer, Writable, Stringable, Sized):
         """
         return StringSlice[__origin_of(self)](ptr=self._data, length=self._size)
 
-    fn _resize(inout self, capacity: Int) -> None:
+    fn _resize(mut self, capacity: Int) -> None:
         """Resizes the Writer's internal buffer.
 
         Args:
@@ -129,7 +129,7 @@ struct ByteWriter(Writer, Writable, Stringable, Sized):
 
         return None
 
-    fn _resize_if_needed(inout self, bytes_to_add: Int) -> None:
+    fn _resize_if_needed(mut self, bytes_to_add: Int) -> None:
         """Resizes the buffer if the number of bytes to add exceeds the buffer's capacity.
 
         Args:
@@ -150,7 +150,7 @@ struct ByteWriter(Writer, Writable, Stringable, Sized):
         """
         return String.write(self)
 
-    fn write_to[W: Writer, //](self, inout writer: W):
+    fn write_to[W: Writer, //](self, mut writer: W):
         """Writes the content of the buffer to the specified writer.
 
         Parameters:
@@ -161,7 +161,7 @@ struct ByteWriter(Writer, Writable, Stringable, Sized):
         """
         writer.write_bytes(self.as_bytes())
 
-    fn consume(inout self, reuse: Bool = False) -> String:
+    fn consume(mut self, reuse: Bool = False) -> String:
         """Constructs and returns a new `String` by copying the content of the internal buffer.
 
         Args:
@@ -181,7 +181,7 @@ struct ByteWriter(Writer, Writable, Stringable, Sized):
         self._size = 0
         return result
 
-    fn write_byte(inout self, byte: Byte):
+    fn write_byte(mut self, byte: Byte):
         """Appends a byte to the buffer.
 
         Args:
@@ -192,7 +192,7 @@ struct ByteWriter(Writer, Writable, Stringable, Sized):
         self._size += 1
 
     @always_inline
-    fn write_bytes(inout self, bytes: Span[Byte]) -> None:
+    fn write_bytes(mut self, bytes: Span[Byte]) -> None:
         """Write `bytes` to the `ByteWriter`.
 
         Args:
@@ -205,7 +205,7 @@ struct ByteWriter(Writer, Writable, Stringable, Sized):
         parallel_memcpy(self._data.offset(self._size), bytes._data, len(bytes))
         self._size += len(bytes)
 
-    fn write[*Ts: Writable](inout self, *args: *Ts) -> None:
+    fn write[*Ts: Writable](mut self, *args: *Ts) -> None:
         """Write data to the buffer.
 
         Parameters:
@@ -229,7 +229,7 @@ struct ByteWriter(Writer, Writable, Stringable, Sized):
         """
         return self._size <= self.offset
 
-    fn reset(inout self) -> None:
+    fn reset(mut self) -> None:
         """Resets the buffer to be empty."""
         if self._data:
             self._data.free()

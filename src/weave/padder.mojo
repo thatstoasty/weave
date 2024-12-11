@@ -1,4 +1,5 @@
-from utils import Span, StringSlice
+from utils import StringSlice
+from memory import Span
 import .ansi
 from .bytes import ByteWriter
 from .unicode import string_width
@@ -70,7 +71,7 @@ struct Writer(Stringable, Movable):
         """
         return str(self.cache)
 
-    fn consume(inout self) -> String:
+    fn consume(mut self) -> String:
         """Returns the padded result as a string by taking the data from the internal buffer.
 
         Returns:
@@ -78,7 +79,7 @@ struct Writer(Stringable, Movable):
         """
         return self.cache.consume()
 
-    fn write[T: Stringable, //](inout self, src: T) -> None:
+    fn write[T: Stringable, //](mut self, src: T) -> None:
         """Writes the text, `content`, to the writer,
         padding the text with a `self.width` number of spaces.
 
@@ -106,12 +107,12 @@ struct Writer(Stringable, Movable):
 
             self.ansi_writer.write(char)
 
-    fn pad(inout self):
+    fn pad(mut self):
         """Pads the current line with spaces to the given width."""
         if self.padding > 0 and self.line_len < self.padding:
             self.ansi_writer.write(SPACE * (self.padding - self.line_len))
 
-    fn flush(inout self):
+    fn flush(mut self):
         """Finishes the padding operation. Always call it before trying to retrieve the final result."""
         if self.line_len != 0:
             self.pad()

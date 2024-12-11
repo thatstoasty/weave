@@ -1,4 +1,5 @@
-from utils import StringSlice, Span
+from utils import StringSlice
+from memory import Span
 from .unicode import string_width, rune_width
 from .bytes import ByteWriter
 
@@ -136,7 +137,7 @@ struct Writer:
         self.last_seq = other.last_seq^
         self.seq_changed = other.seq_changed
 
-    fn write(inout self, content: StringSlice) -> None:
+    fn write(mut self, content: StringSlice) -> None:
         """Write content to the ANSI buffer.
 
         Args:
@@ -173,13 +174,13 @@ struct Writer:
         """
         return self.last_seq.as_string_slice()
 
-    fn reset_ansi(inout self) -> None:
+    fn reset_ansi(mut self) -> None:
         """Resets the ANSI escape sequence."""
         if not self.seq_changed:
             return
 
         self.forward.write(ANSI_MARKER + ANSI_ESCAPE)
 
-    fn restore_ansi(inout self) -> None:
+    fn restore_ansi(mut self) -> None:
         """Restores the last ANSI escape sequence."""
         self.forward.write(self.last_seq)

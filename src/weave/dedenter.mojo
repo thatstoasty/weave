@@ -1,4 +1,4 @@
-from utils import Span
+from memory import Span
 from .bytes import ByteWriter
 
 

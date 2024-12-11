@@ -1,4 +1,5 @@
-from utils import Span, StringSlice
+from utils import StringSlice
+from memory import Span
 import .ansi
 from .bytes import ByteWriter
 
@@ -96,7 +97,7 @@ struct Writer(Stringable, Movable):
         """
         return str(self.buf)
 
-    fn consume(inout self) -> String:
+    fn consume(mut self) -> String:
         """Returns the word wrapped result as a string by taking the data from the internal buffer.
 
         Returns:
@@ -112,13 +113,13 @@ struct Writer(Stringable, Movable):
         """
         return self.buf.as_bytes()
 
-    fn add_space(inout self):
+    fn add_space(mut self):
         """Write the content of the space buffer to the word-wrap buffer."""
         self.line_len += len(self.space)
         self.buf.write(self.space)
         self.space.reset()
 
-    fn add_word(inout self):
+    fn add_word(mut self):
         """Write the content of the word buffer to the word-wrap buffer."""
         if len(self.word) > 0:
             self.add_space()
@@ -126,13 +127,13 @@ struct Writer(Stringable, Movable):
             self.line_len += ansi.printable_rune_width(word)
             self.buf.write(word)
 
-    fn add_newline(inout self):
+    fn add_newline(mut self):
         """Write a newline to the word-wrap buffer and reset the line length & space buffer."""
         self.buf.write(NEWLINE)
         self.line_len = 0
         self.space.reset()
 
-    fn write[T: Stringable, //](inout self, content: T) -> None:
+    fn write[T: Stringable, //](mut self, content: T) -> None:
         """Writes the text, `content`, to the writer, wrapping lines once the limit is reached.
         If the word cannot fit on the line, then it will be written to the next line.
 
@@ -148,7 +149,7 @@ struct Writer(Stringable, Movable):
             return
 
         if not self.keep_newlines:
-            text = text.strip().replace("\n", " ")
+            text = str(text.strip()).replace("\n", " ")
 
         for char in text:
             # ANSI escape sequence
@@ -197,7 +198,7 @@ struct Writer(Stringable, Movable):
                 if word_width < self.limit and self.line_len + len(self.space) + word_width > self.limit:
                     self.add_newline()
 
-    fn close(inout self):
+    fn close(mut self):
         """Finishes the word-wrap operation. Always call it before trying to retrieve the final result."""
         self.add_word()
 
