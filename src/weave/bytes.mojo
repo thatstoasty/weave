@@ -99,7 +99,7 @@ struct ByteWriter(Writer, Writable, Stringable, Sized):
         """
         return self._size - self.offset
 
-    fn as_bytes(ref [_]self) -> Span[Byte, __origin_of(self)]:
+    fn as_bytes(ref self) -> Span[Byte, __origin_of(self)]:
         """Returns the internal data as a Byte Span.
 
         Returns:
@@ -107,7 +107,7 @@ struct ByteWriter(Writer, Writable, Stringable, Sized):
         """
         return Span[Byte, __origin_of(self)](ptr=self._data, length=self._size)
 
-    fn as_string_slice(ref [_]self) -> StringSlice[__origin_of(self)]:
+    fn as_string_slice(ref self) -> StringSlice[__origin_of(self)]:
         """Return a StringSlice view of the data owned by the builder.
 
         Returns:
