@@ -1,20 +1,19 @@
 # weave
 
-A collection of (ANSI-sequence aware) text reflow operations & algorithms. A project to learn Mojo, Go, and how to work with buffers.
+A collection of (ANSI-sequence aware) text reflow operations & algorithms.
 
 Ported from/inspired by: <https://github.com/muesli/reflow/tree/master>
 
-I've only tested this on MacOS VSCode terminal so far, so your mileage may vary!
-
-TODO:
-
-- Handle different types of whitespace.
+![Mojo Version](https://img.shields.io/badge/Mojo%F0%9F%94%A5-24.6-orange)
+![Build Status](https://github.com/thatstoasty/mist/actions/workflows/build.yml/badge.svg)
+![Test Status](https://github.com/thatstoasty/mist/actions/workflows/test.yml/badge.svg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Installation
 
-You should be able to build the package by running `mojo package weave`. But, if you want to build the dependencies and then the package in case it's fallen out of sync, you can run `bash scripts/build.sh package` from the root of the project.
-
-> NOTE: It seems like `.mojopkg` files don't like being part of another package, eg. sticking all of your external deps in an `external` or `vendor` package. The only way I've gotten mojopkg files to work is to be in the same directory as the file being executed, or in the root directory like you can see in this project.
+1. First, you'll need to configure your `mojoproject.toml` file to include my Conda channel. Add `"https://repo.prefix.dev/mojo-community"` to the list of channels.
+2. Next, add `weave` to your project's dependencies by running `magic add weave`.
+3. Finally, run `magic install` to install in `weave` and its dependencies. You should see the `.mojopkg` files in `$CONDA_PREFIX/lib/mojo/` (usually resolves to `.magic/envs/default/lib/mojo`).
 
 ## Wrap (Unconditional Wrapping)
 
@@ -35,15 +34,15 @@ Sekai
 !
 ```
 
-## Wordwrap
+## Word wrap
 
-The `wordwrap` package lets you word-wrap strings or entire blocks of text.
+The `word_wrap` package lets you word-wrap strings or entire blocks of text.
 
 ```mojo
-from weave import wordwrap
+from weave import word_wrap
 
 fn main():
-    print(wordwrap("Hello Sekai!", 6))
+    print(word_wrap("Hello Sekai!", 6))
 ```
 
 Output
@@ -56,7 +55,7 @@ Sekai!
 ### ANSI Example
 
 ```mojo
-print(wordwrap("I really \x1B[38;2;249;38;114mlove\x1B[0m Mojo!", 10))
+print(word_wrap("I really \x1B[38;2;249;38;114mlove\x1B[0m Mojo!", 10))
 ```
 
 ![ANSI Example Output](https://github.com/thatstoasty/weave/blob/main/weave.png)
@@ -139,7 +138,6 @@ abcde
 from weave import wrap
 from weave import padding
 
-
 fn main():
     print(padding(wrap("Hello Sekai!", 5), 5))
 ```
@@ -151,3 +149,7 @@ Hello
 Sekai
 !
 ```
+
+## TODO
+
+- Handle different types of whitespace.
