@@ -4,9 +4,10 @@ A collection of (ANSI-sequence aware) text reflow operations & algorithms.
 
 Ported from/inspired by: <https://github.com/muesli/reflow/tree/master>
 
-TODO:
-
-- Handle different types of whitespace.
+![Mojo Version](https://img.shields.io/badge/Mojo%F0%9F%94%A5-24.6-orange)
+![Build Status](https://github.com/thatstoasty/mist/actions/workflows/build.yml/badge.svg)
+![Test Status](https://github.com/thatstoasty/mist/actions/workflows/test.yml/badge.svg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Installation
 
@@ -148,3 +149,7 @@ Hello
 Sekai
 !
 ```
+
+## TODO
+
+- Handle different types of whitespace.
