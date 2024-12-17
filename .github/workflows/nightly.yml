@@ -5,7 +5,7 @@ name: Build all packages
 #     branches:
 #       - nightly
 #     paths:
-#         - src/**
+#       - src/**
 
 on: ["push"]
 

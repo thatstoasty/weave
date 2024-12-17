@@ -2,6 +2,7 @@ from collections import InlineArray
 
 
 alias Interval = Tuple[UInt32, UInt32]
+"""Low to high interval of codepoints."""
 
 
 alias combining = InlineArray[Interval, 43](
