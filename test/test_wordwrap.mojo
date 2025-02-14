@@ -32,7 +32,7 @@ def test_keep_newlines():
     testing.assert_equal(word_wrap("\nfoo bar\n\n\nfoo\n", 4), "\nfoo\nbar\n\n\nfoo\n")
 
     # Unless we ask them to be ignored:
-    testing.assert_equal(word_wrap("\nfoo bar\n\n\nfoo\n", 4, keep_newlines=False), "foo\nbar\nfoo")
+    testing.assert_equal(word_wrap[keep_newlines=False]("\nfoo bar\n\n\nfoo\n", 4), "foo\nbar\nfoo")
 
     # Complete example:
     testing.assert_equal(

@@ -7,7 +7,7 @@ from weave.bytes import ByteWriter
 
 fn benchmarks() raises:
     var buffer = ByteWriter(capacity=4423106 * 10)
-    var path = str(pathlib._dir_of_current_file()) + "/data/big.txt"
+    var path = String(pathlib._dir_of_current_file()) + "/data/big.txt"
     with open(path, "r") as file:
         var data = file.read()
         for _ in range(1):
