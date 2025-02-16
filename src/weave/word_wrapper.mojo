@@ -31,9 +31,9 @@ struct Writer[keep_newlines: Bool = True](Stringable, Writable, Movable):
 
     var limit: Int
     """The maximum number of characters per line."""
-    var breakpoint: String
+    var breakpoint: Char
     """The character to use as a breakpoint."""
-    var newline: String
+    var newline: Char
     """The character to use as a newline."""
     var buf: ByteWriter
     """The buffer that stores the word-wrapped content."""
@@ -65,8 +65,8 @@ struct Writer[keep_newlines: Bool = True](Stringable, Writable, Movable):
             ansi: Whether the current character is part of an ANSI escape sequence.
         """
         self.limit = limit
-        self.breakpoint = breakpoint
-        self.newline = newline
+        self.breakpoint = Char(ord(breakpoint))
+        self.newline = Char(ord(newline))
         self.buf = ByteWriter()
         self.space = ByteWriter()
         self.word = ByteWriter()
@@ -126,15 +126,16 @@ struct Writer[keep_newlines: Bool = True](Stringable, Writable, Movable):
     fn add_space(mut self):
         """Write the content of the space buffer to the word-wrap buffer."""
         self.line_len += len(self.space)
-        self.buf.write(self.space.consume[reuse=True]())
+        self.buf.write(self.space)
+        self.space.clear()
 
     fn add_word(mut self):
         """Write the content of the word buffer to the word-wrap buffer."""
         if len(self.word) > 0:
             self.add_space()
-            var word = self.word.consume[reuse=True]()
-            self.line_len += ansi.printable_rune_width(word)
-            self.buf.write(word)
+            self.line_len += ansi.printable_rune_width(self.word)
+            self.buf.write(self.word)
+            self.word.clear()
 
     fn add_newline(mut self):
         """Write a newline to the word-wrap buffer and reset the line length & space buffer."""
@@ -175,7 +176,7 @@ struct Writer[keep_newlines: Bool = True](Stringable, Writable, Movable):
 
             # end of current line
             # see if we can add the content of the space buffer to the current line
-            elif String(char) == self.newline:
+            elif char == self.newline:
                 if len(self.word) == 0:
                     if self.line_len + len(self.space) > self.limit:
                         self.line_len = 0
@@ -193,7 +194,7 @@ struct Writer[keep_newlines: Bool = True](Stringable, Writable, Movable):
                 self.space.write(SPACE)
 
             # valid breakpoint
-            elif String(char) == self.breakpoint:
+            elif char == self.breakpoint:
                 self.add_space()
                 self.add_word()
                 self.buf.write(self.breakpoint)

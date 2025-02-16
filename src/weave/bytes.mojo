@@ -240,6 +240,13 @@ struct ByteWriter(Writer, Writable, Stringable, Sized):
         """
         return self._size <= self.offset
 
+    fn clear(mut self) -> None:
+        """Clears the buffer by resetting the size and offset."""
+        for i in range(self._size):
+            (self._data + i).destroy_pointee()
+        self._size = 0
+        self.offset = 0
+
     fn reset(mut self) -> None:
         """Resets the buffer to be empty."""
         if self._data:
