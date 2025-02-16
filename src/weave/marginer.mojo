@@ -1,11 +1,15 @@
+import utils.write
 from utils import StringSlice
 from memory import Span
-import . padder as padding
-import . indenter as indent
-from .bytes import ByteWriter
+import weave.ansi
+import weave.padder as padding
+import weave.indenter as indent
+from weave.bytes import ByteWriter
+from weave.traits import AsStringSlice
+from weave.unicode import string_width
 
 
-struct Writer(Stringable, Movable):
+struct Writer(Stringable, Writable, Movable):
     """A margin writer that applies a margin to the content.
 
     Example Usage:
@@ -66,7 +70,18 @@ struct Writer(Stringable, Movable):
         Returns:
             The string with margin applied.
         """
-        return str(self.buf)
+        return String(self.buf)
+
+    fn write_to[W: write.Writer, //](self, mut writer: W):
+        """Writes the content of the buffer to the specified writer.
+
+        Parameters:
+            W: The type of the writer to write to.
+
+        Args:
+            writer: The writer to write the content to.
+        """
+        writer.write(self.buf)
 
     fn consume(mut self) -> String:
         """Returns the result with margin applied as a string by taking the data from the internal buffer.
@@ -84,7 +99,26 @@ struct Writer(Stringable, Movable):
         """
         return self.buf.as_bytes()
 
-    fn write[T: Stringable, //](mut self, content: T) -> None:
+    fn _write(mut self, text: StringSlice) -> None:
+        """Writes the text, `content`, to the writer, with the
+        padding and indentation applied.
+
+        Args:
+            text: The String to write.
+        """
+        self.iw._write(text)
+        self.pw.write(self.iw.consume())
+
+    fn write(mut self, text: StringLiteral) -> None:
+        """Writes the text, `content`, to the writer, with the
+        padding and indentation applied.
+
+        Args:
+            text: The String to write.
+        """
+        self._write(text)
+
+    fn write[T: AsStringSlice, //](mut self, text: T) -> None:
         """Writes the text, `content`, to the writer, with the
         padding and indentation applied.
 
@@ -92,11 +126,9 @@ struct Writer(Stringable, Movable):
             T: The type of the Stringable object to dedent.
 
         Args:
-            content: The String to write.
+            text: The String to write.
         """
-        var text = str(content)
-        self.iw.write(text)
-        self.pw.write(self.iw.consume())
+        self._write(text.as_string_slice())
 
     fn close(mut self):
         """Will finish the margin operation. Always call it before trying to retrieve the final result."""
@@ -104,14 +136,31 @@ struct Writer(Stringable, Movable):
         self.buf.write(self.pw.consume())
 
 
-fn margin[T: Stringable, //](text: T, width: Int, margin: Int) -> String:
+fn margin(text: StringLiteral, width: Int, margin: Int) -> String:
+    """Right pads `text` with a `width` number of spaces, and indents it with `margin` spaces.
+
+    Args:
+        text: The content to apply the margin to.
+        width: The width of the margin.
+        margin: The margin to apply.
+
+    Returns:
+        A new margin applied string.
+    """
+    var writer = Writer(width, margin)
+    writer.write(text)
+    writer.close()
+    return writer.consume()
+
+
+fn margin[T: AsStringSlice, //](text: T, width: Int, margin: Int) -> String:
     """Right pads `text` with a `width` number of spaces, and indents it with `margin` spaces.
 
     Parameters:
         T: The type of the Stringable object to dedent.
 
     Args:
-        text: The byte slice to apply the margin to.
+        text: The content to apply the margin to.
         width: The width of the margin.
         margin: The margin to apply.
 

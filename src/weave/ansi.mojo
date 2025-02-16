@@ -1,11 +1,15 @@
 from utils import StringSlice
 from memory import Span
-from .unicode import string_width, rune_width
-from .bytes import ByteWriter
+from weave.unicode import string_width, char_width
+from weave.bytes import ByteWriter
+from weave.traits import AsStringSlice
 
 
 alias ANSI_ESCAPE = "[0m"
+alias ANSI_ESCAPE_BYTE = ord(ANSI_ESCAPE)
 alias ANSI_MARKER = "\x1b"
+alias ANSI_MARKER_BYTE = ord(ANSI_MARKER)
+alias SGR_COMMAND = ord("m")
 
 
 fn equals(left: Span[Byte], right: Span[Byte]) -> Bool:
@@ -45,7 +49,7 @@ fn has_suffix(bytes: Span[Byte], suffix: Span[Byte]) -> Bool:
     return True
 
 
-fn is_terminator(c: Int) -> Bool:
+fn is_terminator(c: Char) -> Bool:
     """Reports if the rune is a terminator.
 
     Args:
@@ -54,10 +58,11 @@ fn is_terminator(c: Int) -> Bool:
     Returns:
         True if the rune is a terminator, False otherwise.
     """
-    return (c >= 0x40 and c <= 0x5A) or (c >= 0x61 and c <= 0x7A)
+    var rune = c.to_u32()
+    return (rune >= 0x40 and rune <= 0x5A) or (rune >= 0x61 and rune <= 0x7A)
 
 
-fn printable_rune_width(text: String) -> Int:
+fn printable_rune_width(text: StringSlice) -> Int:
     """Returns the cell width of the given string.
 
     Args:
@@ -69,22 +74,49 @@ fn printable_rune_width(text: String) -> Int:
     var length = 0
     var ansi = False
 
-    for char in text:
-        if len(char) > 1:
-            length += string_width(char)
+    for char in text.chars():
+        if char.utf8_byte_length() > 1:
+            length += char_width(char)
             continue
 
-        if char == ANSI_MARKER:
+        if char.to_u32() == ANSI_MARKER_BYTE:
             # ANSI escape sequence
             ansi = True
         elif ansi:
-            if is_terminator(ord(char)):
+            if is_terminator(char):
                 # ANSI sequence terminated
                 ansi = False
         else:
-            length += string_width(char)
+            length += char_width(char)
 
     return length
+
+
+fn printable_rune_width(text: StringLiteral) -> Int:
+    """Returns the cell width of the given string.
+
+    Args:
+        text: String to calculate the width of.
+
+    Returns:
+        The printable cell width of the string.
+    """
+    return printable_rune_width(text.as_string_slice())
+
+
+fn printable_rune_width[T: AsStringSlice, //](text: T) -> Int:
+    """Returns the cell width of the given string.
+
+    Parameters:
+        T: The type of the AsStringSlice object.
+
+    Args:
+        text: String to calculate the width of.
+
+    Returns:
+        The printable cell width of the string.
+    """
+    return printable_rune_width(text.as_string_slice())
 
 
 struct Writer:
@@ -143,28 +175,35 @@ struct Writer:
         Args:
             content: The content to write.
         """
-        for char in content:
-            # ANSI escape sequence
-            if char == ANSI_MARKER:
-                self.ansi = True
-                self.seq_changed = True
-                self.ansi_seq.write(char)
-            elif self.ansi:
-                self.ansi_seq.write(char)
-                if is_terminator(ord(char)):
-                    self.ansi = False
+        for char in content.chars():
+            self.write(char)
 
-                    if self.ansi_seq.as_string_slice().startswith(ANSI_ESCAPE):
-                        # reset sequence
-                        self.last_seq.reset()
-                        self.seq_changed = False
-                    elif char == "m":
-                        # color code
-                        self.last_seq.write(self.ansi_seq)
+    fn write(mut self, char: Char) -> None:
+        """Write char to the ANSI buffer.
 
-                    self.forward.write(self.ansi_seq)
-            else:
-                self.forward.write(char)
+        Args:
+            char: The content to write.
+        """
+        # ANSI escape sequence
+        if char.to_u32() == ANSI_MARKER_BYTE:
+            self.ansi = True
+            self.seq_changed = True
+            self.ansi_seq.write(char)
+        elif self.ansi:
+            self.ansi_seq.write(char)
+            if is_terminator(char):
+                self.ansi = False
+                if self.ansi_seq.as_string_slice().startswith(ANSI_ESCAPE):
+                    # reset sequence
+                    self.last_seq.reset()
+                    self.seq_changed = False
+                elif char.to_u32() == SGR_COMMAND:
+                    # color code
+                    self.last_seq.write(self.ansi_seq)
+
+                self.forward.write(self.ansi_seq)
+        else:
+            self.forward.write(char)
 
     fn last_sequence(self) -> StringSlice[__origin_of(self.last_seq)]:
         """Returns the last ANSI escape sequence.

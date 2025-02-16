@@ -1,11 +1,12 @@
+import utils.write
 from utils import StringSlice
 from memory import Span
-import .ansi
-from .bytes import ByteWriter
-from .unicode import string_width
+import weave.ansi
+from weave.traits import AsStringSlice
+from weave.unicode import char_width
 
 
-struct Writer(Stringable, Movable):
+struct Writer(Stringable, Writable, Movable):
     """A truncating writer that truncates content at the given printable cell width.
 
     Example Usage:
@@ -59,7 +60,18 @@ struct Writer(Stringable, Movable):
         Returns:
             The truncated string.
         """
-        return str(self.ansi_writer.forward)
+        return String(self.ansi_writer.forward)
+
+    fn write_to[W: write.Writer, //](self, mut writer: W):
+        """Writes the content of the buffer to the specified writer.
+
+        Parameters:
+            W: The type of the writer to write to.
+
+        Args:
+            writer: The writer to write to.
+        """
+        writer.write(self.ansi_writer.forward)
 
     fn consume(mut self) -> String:
         """Returns the truncated result as a string by taking the data from the internal buffer.
@@ -77,17 +89,13 @@ struct Writer(Stringable, Movable):
         """
         return self.ansi_writer.forward.as_bytes()
 
-    fn write[T: Stringable, //](mut self, content: T) -> None:
+    fn _write(mut self, text: StringSlice) -> None:
         """Writes the text, `content`, to the writer, truncating content at the given printable cell width,
         leaving any ANSI sequences intact.
 
-        Parameters:
-            T: The type of the Stringable object.
-
         Args:
-            content: The content to write.
+            text: The content to write.
         """
-        var text = str(content)
         var tw = ansi.printable_rune_width(self.tail)
         if self.width < tw:
             self.ansi_writer.forward.write(self.tail)
@@ -96,16 +104,16 @@ struct Writer(Stringable, Movable):
         self.width -= tw
         var cur_width = 0
 
-        for char in text:
-            if char == ansi.ANSI_MARKER:
+        for char in text.chars():
+            if char.to_u32() == ansi.ANSI_MARKER_BYTE:
                 # ANSI escape sequence
                 self.in_ansi = True
             elif self.in_ansi:
-                if ansi.is_terminator(ord(char)):
+                if ansi.is_terminator(char):
                     # ANSI sequence terminated
                     self.in_ansi = False
             else:
-                cur_width += string_width(char)
+                cur_width += char_width(char)
 
             if cur_width > self.width:
                 self.ansi_writer.forward.write(self.tail)
@@ -115,8 +123,55 @@ struct Writer(Stringable, Movable):
 
             self.ansi_writer.write(char)
 
+    fn write(mut self, text: StringLiteral) -> None:
+        """Writes the text, `content`, to the writer, truncating content at the given printable cell width,
+        leaving any ANSI sequences intact.
 
-fn truncate[T: Stringable, //](text: T, width: Int, tail: String = "") -> String:
+
+        Args:
+            text: The content to write.
+        """
+        self._write(text)
+
+    fn write[T: AsStringSlice, //](mut self, text: T) -> None:
+        """Writes the text, `content`, to the writer, truncating content at the given printable cell width,
+        leaving any ANSI sequences intact.
+
+        Parameters:
+            T: The type of the Stringable object.
+
+        Args:
+            text: The content to write.
+        """
+        self._write(text.as_string_slice())
+
+
+fn truncate(text: StringLiteral, width: Int, tail: String = "") -> String:
+    """Truncates `text` at `width` characters. A tail is then added to the end of the string.
+
+    Args:
+        text: The string to truncate.
+        width: The maximum printable cell width.
+        tail: The tail to append to the truncated content.
+
+    Returns:
+        A new truncated string.
+
+    ```mojo
+    from weave import truncate
+
+    fn main():
+        var truncated = truncate("Hello, World!", 5, ".")
+        print(truncated)
+    ```
+    .
+    """
+    var writer = Writer(width, tail)
+    writer.write(text)
+    return writer.consume()
+
+
+fn truncate[T: AsStringSlice, //](text: T, width: Int, tail: String = "") -> String:
     """Truncates `text` at `width` characters. A tail is then added to the end of the string.
 
     Parameters:

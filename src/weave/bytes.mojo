@@ -9,7 +9,7 @@ struct ByteWriter(Writer, Writable, Stringable, Sized):
     Examples:
     ```mojo
     import weave.bytes
-    buf = bytes.ByteWriter(capacity=16)
+    buf = bytes.ByteWriter()
     buf.write("Hello, World!")
     print(buf.consume())  # Output: Hello, World!
     ```
@@ -137,7 +137,7 @@ struct ByteWriter(Writer, Writable, Stringable, Sized):
         """
         # TODO: Handle the case where new_capacity is greater than MAX_INT. It should panic.
         if bytes_to_add > self._capacity - self._size:
-            new_capacity = int(self._capacity * 2)
+            new_capacity = Int(self._capacity * 2)
             if new_capacity < self._capacity + bytes_to_add:
                 new_capacity = self._capacity + bytes_to_add
             self._resize(new_capacity)
@@ -161,10 +161,10 @@ struct ByteWriter(Writer, Writable, Stringable, Sized):
         """
         writer.write_bytes(self.as_bytes())
 
-    fn consume(mut self, reuse: Bool = False) -> String:
+    fn consume[reuse: Bool = False](mut self) -> String:
         """Constructs and returns a new `String` by copying the content of the internal buffer.
 
-        Args:
+        Parameters:
             reuse: If `True`, a new internal buffer will be allocated with the same capacity as the previous one.
 
         Returns:
@@ -174,12 +174,14 @@ struct ByteWriter(Writer, Writable, Stringable, Sized):
         bytes.append(0)
         result = String(bytes^)
 
+        @parameter
         if reuse:
             self._data = UnsafePointer[Byte].alloc(self._capacity)
         else:
             self._data = UnsafePointer[Byte]()
         self._size = 0
-        return result
+        self.offset = 0
+        return result^
 
     fn write_byte(mut self, byte: Byte):
         """Appends a byte to the buffer.
@@ -221,6 +223,15 @@ struct ByteWriter(Writer, Writable, Stringable, Sized):
 
         args.each[write_arg]()
 
+    fn write(mut self, char: Char):
+        """Allocates a string using the given character and writes it to the buffer.
+
+        Args:
+            char: The character to append.
+        """
+        self._resize_if_needed(char.utf8_byte_length())
+        self._size += char.unsafe_write_utf8(self._data.offset(self._size))
+
     fn empty(self) -> Bool:
         """Reports whether the unread portion of the buffer is empty.
 
@@ -229,10 +240,17 @@ struct ByteWriter(Writer, Writable, Stringable, Sized):
         """
         return self._size <= self.offset
 
+    fn clear(mut self) -> None:
+        """Clears the buffer by resetting the size and offset."""
+        for i in range(self._size):
+            (self._data + i).destroy_pointee()
+        self._size = 0
+        self.offset = 0
+
     fn reset(mut self) -> None:
         """Resets the buffer to be empty."""
         if self._data:
             self._data.free()
-        self._data = UnsafePointer[Byte]().alloc(self._capacity)
+        self._data = UnsafePointer[Byte].alloc(self._capacity)
         self._size = 0
         self.offset = 0

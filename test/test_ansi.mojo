@@ -4,8 +4,8 @@ from weave.bytes import ByteWriter
 
 
 def test_is_terminator():
-    testing.assert_true(is_terminator(ord("m")))
-    testing.assert_false(is_terminator(0x20))
+    for char in "m".as_string_slice().chars():
+        testing.assert_true(is_terminator(char))
 
 
 def test_printable_rune_length():
@@ -23,20 +23,20 @@ def test_printable_rune_length():
 
 def test_writer_last_sequence():
     var writer = Writer()
-    testing.assert_equal(writer.last_sequence(), "")
+    testing.assert_equal(String(writer.last_sequence()), "")
 
 
 def test_reset_ansi():
     var writer = Writer()
     writer.reset_ansi()
-    testing.assert_equal(str(writer.forward), "")
+    testing.assert_equal(String(writer.forward), "")
     writer.seq_changed = True
     writer.reset_ansi()
-    testing.assert_equal(str(writer.forward), "\x1b[0m")
+    testing.assert_equal(String(writer.forward), "\x1b[0m")
 
 
 def test_restore_ansi():
     var writer = Writer()
     writer.last_seq = ByteWriter("\x1b[38;2;249;38;114m")
     writer.restore_ansi()
-    testing.assert_equal(str(writer.forward), "\x1b[38;2;249;38;114m")
+    testing.assert_equal(String(writer.forward), "\x1b[38;2;249;38;114m")

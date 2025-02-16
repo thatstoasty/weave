@@ -15,7 +15,7 @@ def test_keep_newlines():
     testing.assert_equal(wrap("f\no\nobar", 3, tab_width=0), "f\no\noba\nr")
 
     # Newlines can be ignored if desired
-    testing.assert_equal(wrap("f\no\nobar", 3, keep_newlines=False, tab_width=0), "foo\nbar")
+    testing.assert_equal(wrap[keep_newlines=False]("f\no\nobar", 3, tab_width=0), "foo\nbar")
 
 
 def test_preserve_space():

@@ -1,15 +1,20 @@
+import utils.write
 from utils import StringSlice
 from memory import Span
-import .ansi
-from .bytes import ByteWriter
+import weave.ansi
+from weave.bytes import ByteWriter
+from weave.traits import AsStringSlice
 
 
 alias DEFAULT_NEWLINE = "\n"
 alias DEFAULT_BREAKPOINT = "-"
 
 
-struct Writer(Stringable, Movable):
+struct Writer[keep_newlines: Bool = True](Stringable, Writable, Movable):
     """A word-wrapping writer that wraps content based on words at the given limit.
+
+    Parameters:
+        keep_newlines: Whether to keep newlines in the content.
 
     Example Usage:
     ```mojo
@@ -26,12 +31,10 @@ struct Writer(Stringable, Movable):
 
     var limit: Int
     """The maximum number of characters per line."""
-    var breakpoint: String
+    var breakpoint: Char
     """The character to use as a breakpoint."""
-    var newline: String
+    var newline: Char
     """The character to use as a newline."""
-    var keep_newlines: Bool
-    """Whether to keep newlines in the content."""
     var buf: ByteWriter
     """The buffer that stores the word-wrapped content."""
     var space: ByteWriter
@@ -49,7 +52,6 @@ struct Writer(Stringable, Movable):
         *,
         breakpoint: String = DEFAULT_BREAKPOINT,
         newline: String = DEFAULT_NEWLINE,
-        keep_newlines: Bool = True,
         line_len: Int = 0,
         ansi: Bool = False,
     ):
@@ -59,14 +61,12 @@ struct Writer(Stringable, Movable):
             limit: The maximum number of characters per line.
             breakpoint: The character to use as a breakpoint.
             newline: The character to use as a newline.
-            keep_newlines: Whether to keep newlines in the content.
             line_len: The current line length.
             ansi: Whether the current character is part of an ANSI escape sequence.
         """
         self.limit = limit
-        self.breakpoint = breakpoint
-        self.newline = newline
-        self.keep_newlines = keep_newlines
+        self.breakpoint = Char(ord(breakpoint))
+        self.newline = Char(ord(newline))
         self.buf = ByteWriter()
         self.space = ByteWriter()
         self.word = ByteWriter()
@@ -82,7 +82,6 @@ struct Writer(Stringable, Movable):
         self.limit = other.limit
         self.breakpoint = other.breakpoint
         self.newline = other.newline
-        self.keep_newlines = other.keep_newlines
         self.buf = other.buf^
         self.space = other.space^
         self.word = other.word^
@@ -95,7 +94,18 @@ struct Writer(Stringable, Movable):
         Returns:
             The word wrapped string.
         """
-        return str(self.buf)
+        return String(self.buf)
+
+    fn write_to[W: write.Writer, //](self, mut writer: W):
+        """Writes the content of the buffer to the specified writer.
+
+        Parameters:
+            W: The type of the writer.
+
+        Args:
+            writer: The writer to write the content to.
+        """
+        writer.write(self.buf)
 
     fn consume(mut self) -> String:
         """Returns the word wrapped result as a string by taking the data from the internal buffer.
@@ -117,15 +127,15 @@ struct Writer(Stringable, Movable):
         """Write the content of the space buffer to the word-wrap buffer."""
         self.line_len += len(self.space)
         self.buf.write(self.space)
-        self.space.reset()
+        self.space.clear()
 
     fn add_word(mut self):
         """Write the content of the word buffer to the word-wrap buffer."""
         if len(self.word) > 0:
             self.add_space()
-            word = self.word.consume(reuse=True)
-            self.line_len += ansi.printable_rune_width(word)
-            self.buf.write(word)
+            self.line_len += ansi.printable_rune_width(self.word)
+            self.buf.write(self.word)
+            self.word.clear()
 
     fn add_newline(mut self):
         """Write a newline to the word-wrap buffer and reset the line length & space buffer."""
@@ -133,34 +143,35 @@ struct Writer(Stringable, Movable):
         self.line_len = 0
         self.space.reset()
 
-    fn write[T: Stringable, //](mut self, content: T) -> None:
+    fn _write(mut self, text: StringSlice) -> None:
         """Writes the text, `content`, to the writer, wrapping lines once the limit is reached.
         If the word cannot fit on the line, then it will be written to the next line.
 
-        Parameters:
-            T: The type of the Stringable object.
-
         Args:
-            content: The content to write.
+            text: The content to write.
         """
-        var text = str(content)
         if self.limit == 0:
             self.buf.write(text)
             return
 
-        if not self.keep_newlines:
-            text = str(text.strip()).replace("\n", " ")
+        var content: String
 
-        for char in text:
+        @parameter
+        if not keep_newlines:
+            content = String(text.strip()).replace("\n", " ")
+        else:
+            content = String(text)
+
+        for char in content.chars():
             # ANSI escape sequence
-            if char == ansi.ANSI_MARKER:
-                self.word.write_bytes(char.as_bytes())
+            if char.to_u32() == ansi.ANSI_MARKER_BYTE:
+                self.word.write(char)
                 self.ansi = True
             elif self.ansi:
-                self.word.write_bytes(char.as_bytes())
+                self.word.write(char)
 
                 # ANSI sequence terminated
-                if ansi.is_terminator(ord(char)):
+                if ansi.is_terminator(char):
                     self.ansi = False
 
             # end of current line
@@ -178,7 +189,7 @@ struct Writer(Stringable, Movable):
                 self.add_newline()
 
             # end of current word
-            elif char == SPACE:
+            elif char.to_u32() == SPACE_BYTE:
                 self.add_word()
                 self.space.write(SPACE)
 
@@ -190,13 +201,34 @@ struct Writer(Stringable, Movable):
 
             # any other character
             else:
-                self.word.write_bytes(char.as_bytes())
+                self.word.write(char)
 
                 # add a line break if the current word would exceed the line's
                 # character limit
-                var word_width = ansi.printable_rune_width(str(self.word))
+                var word_width = ansi.printable_rune_width(self.word)
                 if word_width < self.limit and self.line_len + len(self.space) + word_width > self.limit:
                     self.add_newline()
+
+    fn write(mut self, text: StringLiteral) -> None:
+        """Writes the text, `content`, to the writer, wrapping lines once the limit is reached.
+        If the word cannot fit on the line, then it will be written to the next line.
+
+        Args:
+            text: The content to write.
+        """
+        self._write(text.as_string_slice())
+
+    fn write[T: AsStringSlice, //](mut self, text: T) -> None:
+        """Writes the text, `content`, to the writer, wrapping lines once the limit is reached.
+        If the word cannot fit on the line, then it will be written to the next line.
+
+        Parameters:
+            T: The type of the Stringable object.
+
+        Args:
+            text: The content to write.
+        """
+        self._write(text.as_string_slice())
 
     fn close(mut self):
         """Finishes the word-wrap operation. Always call it before trying to retrieve the final result."""
@@ -204,26 +236,24 @@ struct Writer(Stringable, Movable):
 
 
 fn word_wrap[
-    T: Stringable, //
+    keep_newlines: Bool = True
 ](
-    text: T,
+    text: StringLiteral,
     limit: Int,
     *,
     newline: String = DEFAULT_NEWLINE,
-    keep_newlines: Bool = True,
     breakpoint: String = DEFAULT_BREAKPOINT,
 ) -> String:
     """Wraps `text` at `limit` characters per line, if the word can fit on the line.
     Otherwise, it will break prior to adding the word, then add it to the next line.
 
     Parameters:
-        T: The type of the Stringable object.
+        keep_newlines: Whether to keep newlines in the content.
 
     Args:
         text: The string to wrap.
         limit: The maximum number of characters per line.
         newline: The character to use as a newline.
-        keep_newlines: Whether to keep newlines in the content.
         breakpoint: The character to use as a breakpoint.
 
     Returns:
@@ -238,7 +268,41 @@ fn word_wrap[
     ```
     .
     """
-    var writer = Writer(limit, newline=newline, keep_newlines=keep_newlines, breakpoint=breakpoint)
+    var writer = Writer[keep_newlines=keep_newlines](limit, newline=newline, breakpoint=breakpoint)
+    writer.write(text)
+    writer.close()
+    return writer.consume()
+
+
+fn word_wrap[
+    T: AsStringSlice, //, keep_newlines: Bool = True
+](text: T, limit: Int, *, newline: String = DEFAULT_NEWLINE, breakpoint: String = DEFAULT_BREAKPOINT,) -> String:
+    """Wraps `text` at `limit` characters per line, if the word can fit on the line.
+    Otherwise, it will break prior to adding the word, then add it to the next line.
+
+    Parameters:
+        T: The type of the Stringable object.
+        keep_newlines: Whether to keep newlines in the content.
+
+    Args:
+        text: The string to wrap.
+        limit: The maximum number of characters per line.
+        newline: The character to use as a newline.
+        breakpoint: The character to use as a breakpoint.
+
+    Returns:
+        A new word wrapped string.
+
+    ```mojo
+    from weave import word_wrap
+
+    fn main():
+        var wrapped = word_wrap("Hello, World!", 5)
+        print(wrapped)
+    ```
+    .
+    """
+    var writer = Writer[keep_newlines=keep_newlines](limit, newline=newline, breakpoint=breakpoint)
     writer.write(text)
     writer.close()
     return writer.consume()

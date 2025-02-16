@@ -1,11 +1,13 @@
+import utils.write
 from utils import StringSlice
 from memory import Span
-import .ansi
-from .bytes import ByteWriter
-from .unicode import string_width
+import weave.ansi
+from weave.bytes import ByteWriter
+from weave.traits import AsStringSlice
+from weave.unicode import char_width
 
 
-struct Writer(Stringable, Movable):
+struct Writer(Stringable, Writable, Movable):
     """A padding writer that pads content to the given printable cell width.
 
     Example Usage:
@@ -69,7 +71,18 @@ struct Writer(Stringable, Movable):
         Returns:
             The padded string.
         """
-        return str(self.cache)
+        return String(self.cache)
+
+    fn write_to[W: write.Writer, //](self, mut writer: W):
+        """Writes the content of the buffer to the specified writer.
+
+        Parameters:
+            W: The type of the writer.
+
+        Args:
+            writer: The writer to write the content to.
+        """
+        writer.write(self.cache)
 
     fn consume(mut self) -> String:
         """Returns the padded result as a string by taking the data from the internal buffer.
@@ -79,7 +92,40 @@ struct Writer(Stringable, Movable):
         """
         return self.cache.consume()
 
-    fn write[T: Stringable, //](mut self, src: T) -> None:
+    fn _write(mut self, text: StringSlice) -> None:
+        """Writes the text, `content`, to the writer,
+        padding the text with a `self.width` number of spaces.
+
+        Args:
+            text: The content to write.
+        """
+        for char in text.chars():
+            if char.to_u32() == ansi.ANSI_MARKER_BYTE:
+                self.in_ansi = True
+            elif self.in_ansi:
+                if ansi.is_terminator(char):
+                    self.in_ansi = False
+            else:
+                if char.to_u32() == NEWLINE_BYTE:
+                    # end of current line, if pad right then add padding before newline
+                    self.pad()
+                    self.ansi_writer.reset_ansi()
+                    self.line_len = 0
+                else:
+                    self.line_len += char_width(char)
+
+            self.ansi_writer.write(char)
+
+    fn write(mut self, src: StringLiteral) -> None:
+        """Writes the text, `content`, to the writer,
+        padding the text with a `self.width` number of spaces.
+
+        Args:
+            src: The content to write.
+        """
+        self._write(src)
+
+    fn write[T: AsStringSlice, //](mut self, src: T) -> None:
         """Writes the text, `content`, to the writer,
         padding the text with a `self.width` number of spaces.
 
@@ -89,23 +135,7 @@ struct Writer(Stringable, Movable):
         Args:
             src: The content to write.
         """
-        var text = str(src)
-        for char in text:
-            if char == ansi.ANSI_MARKER:
-                self.in_ansi = True
-            elif self.in_ansi:
-                if ansi.is_terminator(ord(char)):
-                    self.in_ansi = False
-            else:
-                if char == NEWLINE:
-                    # end of current line, if pad right then add padding before newline
-                    self.pad()
-                    self.ansi_writer.reset_ansi()
-                    self.line_len = 0
-                else:
-                    self.line_len += string_width(char)
-
-            self.ansi_writer.write(char)
+        self._write(src.as_string_slice())
 
     fn pad(mut self):
         """Pads the current line with spaces to the given width."""
@@ -123,11 +153,37 @@ struct Writer(Stringable, Movable):
         self.in_ansi = False
 
 
-fn padding[T: Stringable, //](text: T, width: Int) -> String:
+fn padding(text: StringLiteral, width: Int) -> String:
+    """Right pads `text` with a `width` number of spaces.
+
+    Args:
+        text: The string to pad.
+        width: The padding width.
+
+    Returns:
+        A new padded string.
+
+    Example Usage:
+    ```mojo
+    from weave import padding
+
+    fn main():
+        var padded = padding("Hello, World!", 5)
+        print(padded)
+    ```
+    .
+    """
+    var writer = Writer(width)
+    writer.write(text)
+    writer.flush()
+    return writer.consume()
+
+
+fn padding[T: AsStringSlice, //](text: T, width: Int) -> String:
     """Right pads `text` with a `width` number of spaces.
 
     Parameters:
-        T: The type of the Stringable object.
+        T: The type of the AsStringSlice object.
 
     Args:
         text: The string to pad.

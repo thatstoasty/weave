@@ -1,9 +1,12 @@
-from utils import StringSlice
+from collections.string import StringSlice
 from memory import Span
-import .ansi
+import utils.write
+from weave.bytes import ByteWriter
+from weave.traits import AsStringSlice
+import weave.ansi
 
 
-struct Writer(Stringable, Movable):
+struct Writer(Stringable, Writable, Movable):
     """A writer that indents content by a given number of spaces.
 
     Example Usage:
@@ -13,7 +16,7 @@ struct Writer(Stringable, Movable):
     fn main():
         var writer = indent.Writer(4)
         writer.write("Hello, World!")
-        print(str(writer))
+        print(writer)
     ```
     """
 
@@ -54,7 +57,18 @@ struct Writer(Stringable, Movable):
         Returns:
             The indented string.
         """
-        return str(self.ansi_writer.forward)
+        return String(self.ansi_writer.forward)
+
+    fn write_to[W: write.Writer, //](self, mut writer: W):
+        """Writes the content of the buffer to the specified writer.
+
+        Parameters:
+            W: The type of the writer.
+
+        Args:
+            writer: The writer to write the content to.
+        """
+        writer.write(self.ansi_writer.forward)
 
     fn consume(mut self) -> String:
         """Returns the indented result as a string by taking the data from the internal buffer.
@@ -64,40 +78,81 @@ struct Writer(Stringable, Movable):
         """
         return self.ansi_writer.forward.consume()
 
-    fn write[T: Stringable, //](mut self, content: T) -> None:
-        """Writes the text, `content`, to the writer,
+    fn _write(mut self, text: StringSlice) -> None:
+        """Writes the text, `text`, to the writer,
         indenting each line by `self.indent` spaces.
 
-        Parameters:
-            T: The type of the Stringable object.
-
         Args:
-            content: The String to write.
+            text: The content to write.
         """
-        var text = str(content)
-        for char in text:
+        for char in text.chars():
             # ANSI escape sequence
-            if char == ansi.ANSI_MARKER:
+            if char.to_u32() == ansi.ANSI_MARKER_BYTE:
                 self.in_ansi = True
             elif self.in_ansi:
                 # ANSI sequence terminated
-                if ansi.is_terminator(ord(char)):
+                if ansi.is_terminator(char):
                     self.in_ansi = False
             else:
                 if not self.skip_indent:
                     self.ansi_writer.reset_ansi()
-                    self.ansi_writer.write(SPACE * int(self.indent))
+                    self.ansi_writer.write(SPACE * self.indent)
                     self.skip_indent = True
                     self.ansi_writer.restore_ansi()
 
                 # end of current line
-                if char == NEWLINE:
+                if char.to_u32() == NEWLINE_BYTE:
                     self.skip_indent = False
 
             self.ansi_writer.write(char)
 
+    fn write(mut self, text: StringLiteral) -> None:
+        """Writes the text, `text`, to the writer,
+        indenting each line by `self.indent` spaces.
 
-fn indent[T: Stringable, //](text: T, indent: Int) -> String:
+        Args:
+            text: The content to write.
+        """
+        self._write(text.as_string_slice())
+
+    fn write[T: AsStringSlice, //](mut self, text: T) -> None:
+        """Writes the text, `text`, to the writer,
+        indenting each line by `self.indent` spaces.
+
+        Parameters:
+            T: The type of the AsStringSlice object.
+
+        Args:
+            text: The content to write.
+        """
+        self._write(text.as_string_slice())
+
+
+fn indent(text: StringLiteral, indent: Int) -> String:
+    """Indents `text` with a `indent` number of spaces.
+
+    Args:
+        text: The string to indent.
+        indent: The number of spaces to indent.
+
+    Returns:
+        A new indented string.
+
+    #### Examples:
+    ```mojo
+    from weave import indent
+
+    fn main():
+        print(indent("Hello, World!", 4))
+    ```
+    .
+    """
+    var writer = Writer(indent)
+    writer.write(text)
+    return writer.consume()
+
+
+fn indent[T: AsStringSlice, //](text: T, indent: Int) -> String:
     """Indents `text` with a `indent` number of spaces.
 
     Parameters:

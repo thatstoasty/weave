@@ -1,10 +1,10 @@
-from .dedenter import dedent
-from .indenter import indent
-from .marginer import margin
-from .padder import padding
-from .truncater import truncate
-from .wrapper import wrap
-from .word_wrapper import word_wrap
+from weave.dedenter import dedent
+from weave.indenter import indent
+from weave.marginer import margin
+from weave.padder import padding
+from weave.truncater import truncate
+from weave.wrapper import wrap
+from weave.word_wrapper import word_wrap
 
 
 alias SPACE = " "
