@@ -1,5 +1,7 @@
 # weave
 
+## DEPRECATED: This project has been merged into https://github.com/thatstoasty/mist
+
 A collection of (ANSI-sequence aware) text reflow operations & algorithms.
 
 Ported from/inspired by: <https://github.com/muesli/reflow/tree/master>
